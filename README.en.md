@@ -15,9 +15,10 @@ Two apps, two roles:
 - **Obsidian** — read, navigate, and capture ideas in `0_Inbox/`.
 - **GitHub Copilot App** — understand, organize, write, and file everything else.
 
-The system uses five folders: `0_Inbox` (raw captures) · `1_Projets` (projects with an end date) ·
-`2_Casquettes` (ongoing roles) · `3_Ressources` (reusable knowledge) · `4_Archives` (completed or
-inactive).
+The main filing system uses five IPCRA folders: `0_Inbox` (raw captures) · `1_Projets` (projects
+with an end date) · `2_Casquettes` (ongoing roles) · `3_Ressources` (reusable knowledge) ·
+`4_Archives` (completed or inactive). The cross-cutting `5_Rappels/` queue holds durable reminders
+organized by theme.
 
 ## Getting started
 
@@ -42,5 +43,6 @@ available offline so it is backed up automatically; the tutorial's setup instruc
 | `config.md` | Your preferences: identity, roles, tone, language, limits, and sensitive topics. |
 | `.github/copilot-instructions.md` | The agent's working rules. |
 | `_systeme/` | How the system works: journal, maintenance routines, and improvements. |
+| `5_Rappels/` | Durable cross-cutting reminders, organized by theme. |
 | `docs/` | Human-facing tutorial and examples; kept out of the agent's context. |
 | `.agents/skills/` | Optional agent skills. |

@@ -36,3 +36,21 @@ Le type est ce qui rend le journal filtrable : la rétro mensuelle lit les `fric
 les répétitions, et la revue hebdo cherche la dernière `revue` pour savoir où s'arrêter.
 
 ## Entrées
+
+### 2026-09-28 — friction — Destination d'une liste durable de rappels
+
+La demande de créer une liste permanente de rappels catégorisés ne précise pas de projet ou de
+casquette. L'Inbox est réservée aux captures datées à qualifier, les ressources excluent les
+actions en cours et `_systeme/` n'accueille pas de contenu métier ; il faut convenir d'une destination
+valide avant de créer la note.
+
+### 2026-09-28 — décision — Création d'une file transverse de rappels
+
+À la demande de l'utilisateur, création de `5_Rappels/` hors des cinq dossiers IPCRA pour accueillir
+une liste durable de rappels généraux, classés automatiquement par thème. Les rappels propres à un
+projet ou à une casquette restent dans leur branche de destination.
+
+### 2026-09-28 — friction — Ambiguïté du mot « branche »
+
+Dans l'échange sur la liste de rappels, « branche dédiée » désignait un dossier du vault, mais pouvait
+être compris comme une branche Git. La distinction n'a pas été explicitée avant le choix de destination.

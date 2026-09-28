@@ -16,8 +16,9 @@ Deux applications, deux rôles :
 - **Obsidian** — lire, naviguer, capturer une idée dans `0_Inbox/`.
 - **GitHub Copilot App** — comprendre, organiser, écrire et ranger tout le reste.
 
-Le classement suit cinq dossiers : `0_Inbox` (capture brute) · `1_Projets` (avec une fin) ·
-`2_Casquettes` (rôles permanents) · `3_Ressources` (réutilisable) · `4_Archives` (terminé).
+Le classement principal suit cinq dossiers IPCRA : `0_Inbox` (capture brute) · `1_Projets` (avec une
+fin) · `2_Casquettes` (rôles permanents) · `3_Ressources` (réutilisable) · `4_Archives` (terminé).
+La file transverse `5_Rappels/` conserve les rappels durables, classés par thème.
 
 ## Démarrer
 
@@ -35,7 +36,8 @@ rien changer à vos habitudes. Le tutoriel détaille ce réglage, qui n'est pas 
 | Fichier | Rôle |
 |---|---|
 | `config.md` | Vos préférences : identité, casquettes, ton, plafonds, périmètre sensible. |
-| `.github/copilot-instructions.md` | Les règles de travail de l'agent. Le socle, tenu sous 120 lignes. |
+| `.github/copilot-instructions.md` | Les règles de travail de l'agent ; plafond défini dans `config.md` §5. |
 | `_systeme/` | Le fonctionnement du système : journal, routines d'entretien, améliorations. |
+| `5_Rappels/` | Les rappels durables et transverses, classés par thème. |
 | `docs/` | Tutoriel et exemples remplis — pour vous, volontairement hors du contexte de l'agent. |
 | `.agents/skills/` | Compétences optionnelles de l'agent. |

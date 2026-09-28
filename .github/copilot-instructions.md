@@ -6,8 +6,9 @@ created_date: 2026-09-19 20:53:34
 
 Second brain personnel en 5 dossiers (IPCRA) : `0_Inbox` capture le brut · `1_Projets` a des dates
 de fin · `2_Casquettes` sont des rôles permanents · `3_Ressources` est réutilisable et transverse ·
-`4_Archives` est terminé ou inactif. `_systeme/` porte le fonctionnement du système ; `docs/`
-s'adresse à l'humain et sort de ton contexte, renvoies-y par un chemin seulement.
+`4_Archives` est terminé ou inactif. `5_Rappels/` accueille les rappels durables et transverses.
+`_systeme/` porte le fonctionnement du système ; `docs/` s'adresse à l'humain et sort de ton
+contexte, renvoies-y par un chemin seulement.
 
 ## 1. Lire `config.md` en premier
 
@@ -15,8 +16,8 @@ En début de session : identité, casquettes, ton, conventions, plafonds, périm
 
 ## 2. Routage : hub → registry → cible
 
-Pour toute demande, identifie le dossier IPCRA concerné et lis son hub homonyme — tout dossier a sa
-note homonyme (`X/X.md`), c'est elle qu'on lit, jamais le dossier. Utilise son **Registry Rapide**
+Pour toute demande, identifie le dossier IPCRA concerné ou la file transverse `5_Rappels/`, puis lis
+son hub homonyme (`X/X.md`) — c'est lui qu'on lit, jamais le dossier. Utilise son **Registry Rapide**
 pour trouver le chemin exact, puis va directement à la cible.
 
 Après toute création, qualification, transformation, déplacement, renommage, archivage ou
