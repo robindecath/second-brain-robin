@@ -1,0 +1,50 @@
+{
+  "required_tools": [
+    {
+      "name": "python3.11+",
+      "description": "Python 3.11 or later (stdlib only — no pip packages needed). Used by the decathlon_api.py script for OAuth2 PKCE authentication and HTTP requests. BMAD's own resolve_customization.py also needs 3.11+ for stdlib `tomllib`, but it is provisioned through `uv` rather than a system interpreter.",
+      "version_cmd": "python3 --version",
+      "install": {
+        "darwin-arm64": {
+          "url": "https://www.python.org/downloads/",
+          "bin_name": "python3"
+        },
+        "darwin-amd64": {
+          "url": "https://www.python.org/downloads/",
+          "bin_name": "python3"
+        },
+        "linux-amd64": {
+          "url": "https://www.python.org/downloads/",
+          "bin_name": "python3"
+        },
+        "win32-amd64": {
+          "url": "https://www.python.org/downloads/",
+          "bin_name": "python3.exe"
+        }
+      }
+    },
+    {
+      "name": "uv",
+      "description": "uv — fast Python package/project manager. REQUIRED as of BMAD-METHOD 6.11.0: every rendered BMAD skill invokes its Python scripts through `uv run` (all 25 resolve_customization.py call sites were migrated from `python3` upstream), and uv provisions the Python 3.11+ those scripts need.",
+      "version_cmd": "uv --version",
+      "install": {
+        "darwin-arm64": {
+          "url": "https://docs.astral.sh/uv/getting-started/installation/",
+          "bin_name": "uv"
+        },
+        "darwin-amd64": {
+          "url": "https://docs.astral.sh/uv/getting-started/installation/",
+          "bin_name": "uv"
+        },
+        "linux-amd64": {
+          "url": "https://docs.astral.sh/uv/getting-started/installation/",
+          "bin_name": "uv"
+        },
+        "win32-amd64": {
+          "url": "https://docs.astral.sh/uv/getting-started/installation/",
+          "bin_name": "uv.exe"
+        }
+      }
+    }
+  ]
+}

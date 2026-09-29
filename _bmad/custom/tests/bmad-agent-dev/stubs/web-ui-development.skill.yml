@@ -1,0 +1,13 @@
+name: web-ui-development
+description: "Load the Decathlon Vitamin Play design system for React, Vue, and Svelte — components, design tokens, icons, Tailwind theme values."
+instructions: |
+  Load the Vitamin Play design system from the dktunited/vitamin-play-web repository.
+  Provide:
+  - Available @vtmn-play/* component packages and usage patterns
+  - Design tokens: colors, spacing, typography, border radius
+  - Icon names and usage
+  - Tailwind theme values for Vitamin Play
+
+  All frontend work MUST use Vitamin Play components and design tokens.
+  Never implement custom CSS colors, spacing, or typography from scratch.
+  Requires the GitHub MCP server to be active; warn the user if it is not available.

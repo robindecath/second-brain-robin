@@ -1,0 +1,12 @@
+name: spring-boot-fedid-resource-server
+description: "Configure a Spring Boot application as an OAuth2 resource server protected by Decathlon FedID."
+instructions: |
+  Set up a Spring Boot application as an OAuth2 resource server using Decathlon FedID.
+  Steps:
+  1. Add spring-boot-starter-oauth2-resource-server dependency
+  2. Configure the FedID JWKS URI in application.yml
+  3. Define the SecurityFilterChain with JWT validation
+  4. Map FedID scopes to Spring Security authorities
+  5. Protect endpoints with method-level or URL-level security
+
+  Provide complete, copy-paste-ready configuration and code.

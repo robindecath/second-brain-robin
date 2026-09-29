@@ -1,0 +1,4 @@
+name: bmad-agent-architect
+description: >-
+  Architect agent skill stub for comparative routing tests.
+  Tests multi-agent skill invocation patterns.

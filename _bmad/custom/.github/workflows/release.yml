@@ -1,0 +1,53 @@
+name: Release customizations zip
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Publish customizations.zip
+    runs-on: decathlon
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Create customizations.zip
+        run: |
+          zip -r customizations.zip . \
+            --exclude ".git/*" \
+            --exclude ".github/*" \
+            --exclude "*.md"
+          echo "Created customizations.zip:"
+          ls -lh customizations.zip
+          unzip -l customizations.zip | tail -5
+
+      - name: Get short SHA
+        id: sha
+        run: echo "short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Delete previous rolling release
+        run: gh release delete latest-customizations --yes || true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create or update rolling release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: latest-customizations
+          name: "Latest Customizations (${{ steps.sha.outputs.short }})"
+          body: |
+            Rolling release of the Decathlon SDLC customizations.
+
+            Auto-updated on every push to `main`. The VS Code extension
+            downloads this zip automatically during project setup.
+
+            **Commit:** ${{ github.sha }}
+            **Branch:** ${{ github.ref_name }}
+          prerelease: false
+          files: customizations.zip
+          generate_release_notes: false

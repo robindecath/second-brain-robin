@@ -1,0 +1,6 @@
+name: dd-apm
+description: Analyses Datadog traces, error rates, p99 latency, service maps, and failing spans.
+instructions: |
+  Query Datadog APM for trace analysis. Look at error rates, latency
+  percentiles (p50, p95, p99), service maps showing upstream/downstream
+  dependencies, and failing spans. Correlate with logs and monitor data.

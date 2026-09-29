@@ -27,6 +27,7 @@ Un sous-dossier par type de ressource, avec sa note de contexte homonyme :
 | Glossaire | Termes et acronymes du domaine | 3_Ressources/Glossaire/Glossaire.md |
 | Decisions_Log | Décisions métier, table chronologique | 3_Ressources/Decisions_Log/Decisions_Log.md |
 | Pattern_Extensibilite | Forme attendue d'un dossier et d'une note | 3_Ressources/Pattern_Extensibilite/Pattern_Extensibilite.md |
+| Annuaire_Contacts | Contacts Google Workspace validés pour les demandes de contact | 3_Ressources/annuaire-contacts/annuaire-contacts.md |
 
 ## Règle de sortie
 

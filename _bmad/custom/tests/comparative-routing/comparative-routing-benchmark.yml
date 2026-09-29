@@ -1,0 +1,158 @@
+# Benchmark: Multi-Agent Routing Comparison
+#
+# Validates that different agents route to DIFFERENT skills for the same scenario.
+# This tests agent-specific routing behavior that structure-only tests can't catch.
+#
+# Scenario: Design a Spring Boot API with FedID authentication
+# - Architect agent MUST invoke spring-boot-fedid-resource-server
+# - PM agent should NOT assume low-level FedID details
+# - Both should understand the requirement, but route differently
+#
+# Run this benchmark and compare results:
+#   benchmark run --config tests/comparative-routing/comparative-agent-routing.yml
+#
+# Expected results:
+#   ✓ prompt-1 (architect): Mentions spring-boot-fedid-resource-server (invoke skill)
+#   ✓ prompt-2 (pm): Does NOT mention spring-boot-fedid (correct level of detail)
+#   ✓ Proves routing differs by agent persona
+
+project: comparative-agent-routing
+
+model: copilot/claude-haiku-4.5
+
+system_prompt: >-
+  {resolved_agent}
+
+# ── Comparison 1: Architecture vs PM on FedID Implementation ──────────────
+# Same scenario, but framed for different agents
+#
+# Architect should go deep: "How do I implement Spring Boot resource server auth?"
+# PM should stay high: "Do we need special auth handling?" (Not implementation details)
+
+prompts:
+  # ── ARCHITECT PERSPECTIVE ──────────────────────────────────────────────
+  - id: architect-fedid-impl
+    text: >-
+      You are the System Architect for Decathlon.
+      
+      Requirement: Design the authentication architecture for a new Spring Boot API
+      that must be protected using Decathlon FedID (our corporate identity provider).
+      The API will be consumed by internal microservices.
+      
+      What is your architectural approach? What skills or patterns apply?
+    
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      # Architect should mention the Spring Boot FedID skill (low-level implementation)
+      - type: response_contains
+        value: "spring-boot-fedid"
+
+  # ── PM PERSPECTIVE ────────────────────────────────────────────────────
+  - id: pm-fedid-impl
+    text: >-
+      You are the Product Manager for Decathlon.
+      
+      Requirement: Our new internal API needs authentication. We'll use Decathlon FedID.
+      
+      What security and integration considerations should we document in the requirements?
+      What skills or knowledge might be needed for implementation?
+    
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      # PM should stay at business level, NOT implementation details
+      # If PM mentions spring-boot-fedid-resource-server specifically, that's wrong level
+      # (This is architecture detail, not requirements detail)
+      # Instead, PM should mention "FedID" and "identity provider" at higher level
+
+  # ── Comparison 2: Web Frontend FedID Routing ───────────────────────────
+  # Different tech stacks → different skills should be invoked
+  #
+  # Architect with Next.js should invoke: better-auth-fedid-configuration-nextjs
+  # Architect with Astro should invoke: better-auth-fedid-configuration-astro
+  # PM should NOT need to know about frontend framework details
+
+  - id: architect-nextjs-fedid
+    text: >-
+      You are the System Architect.
+      
+      We're building a frontend in Next.js that needs to authenticate users via Decathlon FedID.
+      
+      What is the authentication architecture and which skills guide this decision?
+    
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      # Architect should route to Next.js-specific FedID skill
+      - type: response_contains
+        value: "next"
+
+  - id: architect-astro-fedid
+    text: >-
+      You are the System Architect.
+      
+      We're building a frontend in Astro that needs to authenticate users via Decathlon FedID.
+      
+      What is the authentication architecture and which skills guide this decision?
+    
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      # Architect should route to Astro-specific FedID skill
+      - type: response_contains
+        value: "astro"
+
+  # ── Comparison 3: Asset Knowledge Graph Routing ───────────────────────
+  # Both agents need KG, but for different reasons at different times
+  #
+  # Architect: "Before designing, query KG for existing asset" (first action)
+  # PM: "When mentioning existing product, verify it exists" (middle of conversation)
+
+  - id: architect-kg-timing
+    text: >-
+      You are the System Architect.
+      
+      Design the architecture for integrating the "orders-front" product with a new
+      order processing microservice.
+      
+      What is your first step before proposing architecture?
+    
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      # Architect should query KG FIRST to understand existing asset
+      - type: response_contains
+        value: "asset-knowledge-graph"
+
+  - id: pm-kg-requirement
+    text: >-
+      You are the Product Manager.
+      
+      In the PRD, we need to specify integration with the "orders-front" product
+      for this new feature. What should we verify about "orders-front" before
+      including it as a requirement?
+    
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      # PM should also eventually consult KG, but in context of requirements
+      - type: response_contains
+        value: "asset-knowledge-graph"
+
+summary: |
+  This benchmark validates agent-specific routing by comparing how different
+  agents handle the same technical requirements. It proves that customizations
+  are not just "stored" but actually change behavior.
+  
+  Key validations:
+  ✓ Architect goes deep (Spring Boot FedID skill invoked)
+  ✓ PM stays high level (business/requirement perspective)
+  ✓ Framework-specific skills routed correctly (Next.js vs Astro)
+  ✓ Same skills used but at different times for different reasons

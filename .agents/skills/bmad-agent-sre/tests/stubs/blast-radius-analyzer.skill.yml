@@ -1,0 +1,9 @@
+name: blast-radius-analyzer
+description: Simulates a product or component failure to identify downstream technical and customer-facing impacts.
+instructions: |
+  Given a product or component name, identify all downstream technical
+  dependencies (products, components) and customer-facing impacts (User
+  Journeys). Load after knowledge-graph-query to use its resolved
+  relationship data. Produce a structured impact report with the target
+  asset details, direct dependencies, shared infrastructure, failure
+  blast radius, critical path assets, and escalation contacts.

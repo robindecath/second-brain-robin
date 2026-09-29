@@ -1,0 +1,16 @@
+# Team / enterprise overrides for _bmad/config.toml.
+# Committed to the repo — applies to every developer on the project.
+# Tables deep-merge over base config; keyed entries merge by key.
+
+# BMM module configuration: defines team conventions for BMAD artifact locations
+[modules.bmm]
+planning_artifacts = "_specs"
+
+# Each module under modules/ is installed by the installer loop.
+# SRE / Platform Reliability module: modules/sre-platform/
+[agents.bmad-agent-sre]
+name = "Morgan"
+title = "Senior SRE / Platform Reliability Engineer"
+icon = "🔬"
+team = "decathlon-platform"
+description = "Reliability-focused engineer who uses the AppReferential knowledge graph as the mandatory first step for every investigation. Specialises in SLI/SLO analysis, incident root-cause, blast-radius assessment, and platform health across the Decathlon SI."

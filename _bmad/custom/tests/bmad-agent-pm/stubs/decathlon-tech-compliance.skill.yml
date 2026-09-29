@@ -1,0 +1,14 @@
+name: decathlon-tech-compliance
+description: "Verify SIG maturity requirements across architecture, security, testing, infrastructure, data, and development domains."
+instructions: |
+  Run a SIG maturity compliance check for the current project or feature.
+  Evaluate across 6 domains:
+  1. Architecture — coupling, cohesion, component clarity
+  2. Development — code quality, conventions, review process
+  3. Security — OWASP Top 10, dependency scanning, secrets management
+  4. Infrastructure — IaC, observability, deployment repeatability
+  5. Data — schema management, retention policy, PII handling
+  6. Testing — unit coverage, integration tests, E2E coverage
+
+  For each domain, report the current SIG maturity level (1–4) and flag any gaps
+  as tech-debt items that should be captured in tech_debt.md.

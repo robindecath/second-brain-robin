@@ -1,0 +1,4 @@
+name: bmad-agent-architect
+description: >-
+  Architect agent skill stub for merge validation tests.
+  Tests 3-layer TOML merge (base + team + user).

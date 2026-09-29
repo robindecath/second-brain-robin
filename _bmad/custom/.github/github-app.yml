@@ -1,0 +1,32 @@
+instructions: |
+  This repository holds Decathlon's team-level BMAD customizations for the
+  AI-augmented SDLC: agent customizations (bmad-agent-*.toml) and workflow
+  customizations (bmad-*.toml), plus shared platform config
+  (config.toml, skills.config.json, tools.config.json). There is no Node/pnpm
+  application here; customizations are validated with `make` targets that drive
+  bash + `uv` (Python 3.11+) benchmark scripts.
+
+  IMPORTANT — shell/PATH convention. The GitHub Copilot App runs these scripts
+  in a bare, non-login `/bin/sh` that does NOT source the user's shell profile
+  (~/.zshrc, ~/.zprofile). Tools installed via nvm, Homebrew, corepack or asdf
+  (node, npm, pnpm, uv, python) are therefore missing from PATH and fail with
+  `command not found`. Every script below is wrapped in the user's login shell
+  (`${SHELL:-/bin/zsh} -lic '...'`), which adapts to zsh or bash via `$SHELL`
+  and falls back to `/bin/zsh` when `$SHELL` is unset, so the tooling resolves.
+  Apply the same wrapping to any shell command you ask the user to run through
+  the Copilot App. For pnpm specifically, it must first be provisioned (e.g.
+  `corepack enable pnpm`). Note: `fish` is not covered (its flag syntax differs).
+
+scripts:
+  - name: Benchmarks help
+    command: "${SHELL:-/bin/zsh} -lic 'make help'"
+
+  - name: Run all benchmarks (sequential)
+    command: "${SHELL:-/bin/zsh} -lic 'make test-all'"
+
+  - name: Run all benchmarks (parallel)
+    command: "${SHELL:-/bin/zsh} -lic 'make test-all-parallel'"
+
+automation:
+  auto_issue_session: true
+  remote_control: false

@@ -1,0 +1,3318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BCP TIME Portfolio Analysis with Strategies</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.2.1"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+            padding: 30px 20px;
+        }
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 30px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border-bottom: 3px solid #667eea;
+        }
+        h1 {
+            color: #1a202c;
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .subtitle {
+            color: #718096;
+            font-size: 18px;
+            font-weight: 500;
+        }
+        
+        .chart-section {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .chart-wrapper {
+            position: relative;
+            height: 700px;
+        }
+        
+        .strategies-section {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .strategies-section h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+        
+        .strategies-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 20px;
+        }
+        
+        .strategy-block {
+            border-radius: 12px;
+            padding: 20px;
+            border: 2px solid;
+        }
+        
+        .strategy-block.accelerate { border-color: #10b981; background: linear-gradient(135deg, #d1fae5 0%, #ecfdf5 100%); }
+        .strategy-block.improve { border-color: #8b5cf6; background: linear-gradient(135deg, #ddd6fe 0%, #f5f3ff 100%); }
+        .strategy-block.replace { border-color: #ef4444; background: linear-gradient(135deg, #fecaca 0%, #fef2f2 100%); }
+        .strategy-block.rescue { border-color: #f59e0b; background: linear-gradient(135deg, #fde68a 0%, #fef3c7 100%); }
+        .strategy-block.increase { border-color: #3b82f6; background: linear-gradient(135deg, #bfdbfe 0%, #dbeafe 100%); }
+        .strategy-block.reduce { border-color: #6366f1; background: linear-gradient(135deg, #c7d2fe 0%, #e0e7ff 100%); }
+        .strategy-block.sunset { border-color: #64748b; background: linear-gradient(135deg, #cbd5e1 0%, #f1f5f9 100%); }
+        
+        .strategy-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        
+        .strategy-icon {
+            font-size: 28px;
+        }
+        
+        .strategy-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1a202c;
+        }
+        
+        .strategy-meta {
+            font-size: 13px;
+            color: #64748b;
+            margin-left: auto;
+        }
+        
+        .strategy-action {
+            font-size: 13px;
+            color: #475569;
+            margin-bottom: 12px;
+            font-style: italic;
+            line-height: 1.5;
+        }
+        
+        .product-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .product-tag {
+            background: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #334155;
+            border: 1px solid rgba(0,0,0,0.1);
+            white-space: nowrap;
+        }
+        
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            padding: 25px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            border: 2px solid rgba(0,0,0,0.1);
+        }
+        
+        .legend-text {
+            font-size: 13px;
+            color: #2d3748;
+            font-weight: 500;
+        }
+    
+        /* Timeline Control - Sticky at top when scrolling */
+        .timeline-control {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 0 0 16px 16px;
+            padding: 25px 30px;
+            margin-bottom: 30px;
+            margin-left: -20px;
+            margin-right: -20px;
+            padding-left: 20px;
+            padding-right: 20px;
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.4);
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+        
+        /* Enhanced shadow when scrolling */
+        .timeline-control::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            right: 0;
+            height: 10px;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.15), transparent);
+            opacity: 1;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        /* Compact mode when scrolling */
+        .timeline-control.compact {
+            padding: 12px 30px;
+            border-radius: 0;
+        }
+        
+        .timeline-control.compact .timeline-header {
+            margin-bottom: 8px;
+        }
+        
+        .timeline-control.compact .timeline-header h3 {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .timeline-control.compact .quarter-display {
+            font-size: 20px;
+            padding: 4px 16px;
+        }
+        
+        .timeline-control.compact .timeline-slider-container {
+            margin-bottom: 0;
+        }
+        
+        .timeline-control.compact .timeline-stats {
+            display: none;
+        }
+        
+        .timeline-control.compact #testButton {
+            display: none;
+        }
+        
+
+        .timeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .timeline-header h3 {
+            font-size: 20px;
+            font-weight: 700;
+            margin: 0;
+            color: white;
+        }
+        .quarter-display {
+            font-size: 28px;
+            font-weight: 800;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 24px;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        .timeline-slider-container {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .timeline-label {
+            font-size: 14px;
+            font-weight: 600;
+            opacity: 0.9;
+            min-width: 70px;
+            text-align: center;
+        }
+        .timeline-slider {
+            flex: 1;
+            height: 8px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.3);
+            outline: none;
+            -webkit-appearance: none;
+            cursor: pointer;
+        }
+        .timeline-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s;
+        }
+        .timeline-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+        .timeline-slider::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+        .timeline-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
+        .stat-bubble {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 12px 16px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .stat-bubble .stat-label {
+            display: block;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            opacity: 0.8;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+        .stat-bubble .stat-value {
+            display: block;
+            font-size: 20px;
+            font-weight: 800;
+            color: white;
+        }
+
+
+        /* Lifecycle Analysis Section */
+        .lifecycle-section {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        .lifecycle-section h2 {
+            color: #1a202c;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        .lifecycle-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 30px;
+        }
+        .lifecycle-charts {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .lifecycle-chart-card {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .lifecycle-chart-card h3 {
+            color: #334155;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .lifecycle-chart-card canvas {
+            max-height: 280px;
+        }
+        .lifecycle-stats-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .lifecycle-stats-panel > h3 {
+            color: #1a202c;
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        @media (max-width: 1400px) {
+            .lifecycle-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+
+        /* Executive Summary Section */
+        .executive-summary-section {
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+            border-radius: 16px;
+            box-shadow: 0 8px 40px rgba(30, 58, 138, 0.3);
+            padding: 40px;
+            margin-bottom: 30px;
+            color: white;
+        }
+        
+        .executive-summary-section h2 {
+            font-size: 28px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 3px solid #fbbf24;
+            padding-bottom: 12px;
+        }
+        
+        .summary-content {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 30px;
+            border-left: 4px solid #fbbf24;
+            backdrop-filter: blur(10px);
+        }
+        
+        .summary-content p {
+            font-size: 16px;
+            line-height: 1.8;
+            color: rgba(255, 255, 255, 0.95);
+            margin-bottom: 20px;
+        }
+        
+        .summary-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 25px;
+        }
+        
+        .summary-metric {
+            background: rgba(251, 191, 36, 0.15);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
+        
+        .summary-metric-value {
+            font-size: 32px;
+            font-weight: 800;
+            color: #fbbf24;
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .summary-metric-label {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 500;
+        }
+        
+        .summary-highlights {
+            margin-top: 25px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .summary-highlight {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 20px;
+        }
+        
+        .summary-highlight h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: #fbbf24;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .summary-highlight ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .summary-highlight li {
+            font-size: 14px;
+            line-height: 1.7;
+            color: rgba(255, 255, 255, 0.9);
+            padding-left: 20px;
+            position: relative;
+            margin-bottom: 8px;
+        }
+        
+        .summary-highlight li::before {
+            content: '▸';
+            position: absolute;
+            left: 0;
+            color: #fbbf24;
+            font-weight: 700;
+        }
+        
+        @media (max-width: 1000px) {
+            .summary-highlights {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+</style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 BCP Domain - TIME Portfolio Analysis</h1>
+            <p class="subtitle">Technology Investment Management & Evaluation Framework with Strategy Recommendations</p>
+        </div>
+
+        <div class="timeline-control">
+                <div class="timeline-header">
+                    <h3>📅 Portfolio Timeline</h3>
+                    <div class="quarter-display" id="quarterDisplay">Q1-2026</div>
+                </div>
+                <div class="timeline-slider-container">
+                    <span class="timeline-label">Q1-2025</span>
+                    <input type="range" id="quarterSlider" class="timeline-slider" min="0" max="4" value="4" step="1">
+                    <span class="timeline-label">Q1-2026</span>                    <button id="testButton" style="background: rgba(255,255,255,0.3); color: white; border: 2px solid white; padding: 8px 16px; border-radius: 6px; cursor: pointer; margin-left: 10px; font-weight: 600;">
+                        Test Update
+                    </button>
+                </div>
+                <div class="timeline-stats" id="timelineStats">
+                    <div class="stat-bubble">
+                        <span class="stat-label">Products</span>
+                        <span class="stat-value" id="statProducts">50</span>
+                    </div>
+                    <div class="stat-bubble">
+                        <span class="stat-label">Total Budget</span>
+                        <span class="stat-value" id="statBudget">€204.8M</span>
+                    </div>
+                    <div class="stat-bubble">
+                        <span class="stat-label">Avg Business Score</span>
+                        <span class="stat-value" id="statBusiness">47.1</span>
+                    </div>
+                    <div class="stat-bubble">
+                        <span class="stat-label">Avg Tech Performance</span>
+                        <span class="stat-value" id="statTech">69.5</span>
+                    </div>
+                </div>
+            </div>
+
+        <div class="chart-section">
+                
+
+        <div class="chart-wrapper">
+                <canvas id="portfolioChart"></canvas>
+            </div>
+
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #10b981;"></div>
+                    <div class="legend-text">GENERAL_AVAILABILITY</div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #3b82f6;"></div>
+                    <div class="legend-text">BETA</div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #f59e0b;"></div>
+                    <div class="legend-text">ALPHA</div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #ef4444;"></div>
+                    <div class="legend-text">END_OF_LIFE</div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #8b5cf6;"></div>
+                    <div class="legend-text">END_OF_SUPPORT</div>
+                </div>
+            </div>
+        </div>  <!-- Close chart-section -->
+
+        <!-- Lifecycle Distribution Analysis -->
+        <div class="lifecycle-section">
+            <h2>📊 Lifecycle Distribution Analysis</h2>
+            
+            <div class="lifecycle-grid">
+                <!-- Chart Column -->
+                <div class="lifecycle-charts">
+                    <div class="lifecycle-chart-card">
+                        <h3>Product Count by Lifecycle</h3>
+                        <canvas id="lifecycleCountChart"></canvas>
+                    </div>
+                    <div class="lifecycle-chart-card">
+                        <h3>Budget Allocation by Lifecycle (€M)</h3>
+                        <canvas id="lifecycleBudgetChart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Stats Column -->
+                <div class="lifecycle-stats-panel">
+                    <h3>📈 Lifecycle Statistics</h3>
+                    <div id="lifecycleStatsContent">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="strategies-section">
+            <h2>📋 Strategy Recommendations</h2>
+            
+            <div class="strategies-grid">
+                <div class="strategy-block accelerate">
+                    <div class="strategy-header">
+                        <span class="strategy-icon">🚀</span>
+                        <span class="strategy-title">D - Accelerate</span>
+                        <span class="strategy-meta">9 products · €83.2M</span>
+                    </div>
+                    <div class="strategy-action">Continue investment, scale globally, optimize for maximum ROI</div>
+                    <div class="product-list">
+                        <div class="product-tag">Identity</div>
+                        <div class="product-tag">OneCheckout</div>
+                        <div class="product-tag">Consent</div>
+                        <div class="product-tag">OneQuotation</div>
+                        <div class="product-tag">OneFF</div>
+                        <div class="product-tag">Login</div>
+                        <div class="product-tag">Posdata</div>
+                        <div class="product-tag">OneOM</div>
+                        <div class="product-tag">Geolocation</div>
+                    </div>
+                </div>
+                
+                <div class="strategy-block replace">
+                    <div class="strategy-header">
+                        <span class="strategy-icon">🔄</span>
+                        <span class="strategy-title">G - Replace or Buy</span>
+                        <span class="strategy-meta">3 products · €11.3M</span>
+                    </div>
+                    <div class="strategy-action">Critical tech debt. Consider full rewrite or commercial replacement</div>
+                    <div class="product-list">
+                        <div class="product-tag">FBD Connector</div>
+                        <div class="product-tag">Decathlon Activities</div>
+                        <div class="product-tag">OneProduct ASI</div>
+                    </div>
+                </div>
+                
+                <div class="strategy-block rescue">
+                    <div class="strategy-header">
+                        <span class="strategy-icon">⚠️</span>
+                        <span class="strategy-title">B - Rescue</span>
+                        <span class="strategy-meta">20 products · €78.1M</span>
+                    </div>
+                    <div class="strategy-action">Moderate value and tech. Stabilize first, then improve</div>
+                    <div class="product-list">
+                        <div class="product-tag">Masterprice</div>
+                        <div class="product-tag">OnePromotion</div>
+                        <div class="product-tag">member legal entities</div>
+                        <div class="product-tag">onepay-v2</div>
+                        <div class="product-tag">iCheck</div>
+                        <div class="product-tag">OneTax</div>
+                        <div class="product-tag">+14 more</div>
+                    </div>
+                </div>
+                
+                <div class="strategy-block increase">
+                    <div class="strategy-header">
+                        <span class="strategy-icon">📈</span>
+                        <span class="strategy-title">C - Increase Value</span>
+                        <span class="strategy-meta">4 products · €11.8M</span>
+                    </div>
+                    <div class="strategy-action">Tech is solid. Focus on business features to drive adoption</div>
+                    <div class="product-list">
+                        <div class="product-tag">Purchase</div>
+                        <div class="product-tag">OneInvoice</div>
+                        <div class="product-tag">Pixl</div>
+                        <div class="product-tag">OneSubscribe</div>
+                    </div>
+                </div>
+                
+                <div class="strategy-block reduce">
+                    <div class="strategy-header">
+                        <span class="strategy-icon">💰</span>
+                        <span class="strategy-title">E - Reduce Cost</span>
+                        <span class="strategy-meta">6 products · €7.9M</span>
+                    </div>
+                    <div class="strategy-action">Over-engineered for low value. Minimize maintenance, consider consolidation</div>
+                    <div class="product-list">
+                        <div class="product-tag">oneComm</div>
+                        <div class="product-tag">Phrase</div>
+                        <div class="product-tag">Member Lead</div>
+                        <div class="product-tag">Sphere</div>
+                        <div class="product-tag">Brightcove</div>
+                        <div class="product-tag">Streaming Platform</div>
+                    </div>
+                </div>
+                
+                <div class="strategy-block sunset">
+                    <div class="strategy-header">
+                        <span class="strategy-icon">🌅</span>
+                        <span class="strategy-title">A - Sunset</span>
+                        <span class="strategy-meta">8 products · €12.5M</span>
+                    </div>
+                    <div class="strategy-action">Phase out. Plan migration to alternatives or decommission</div>
+                    <div class="product-list">
+                        <div class="product-tag">onepay-v1</div>
+                        <div class="product-tag">OneCusto</div>
+                        <div class="product-tag">OneContent</div>
+                        <div class="product-tag">Digital Twin</div>
+                        <div class="product-tag">Poolparty</div>
+                        <div class="product-tag">+3 more</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Executive Summary Section -->
+        <div class="executive-summary-section">
+            <h2>⭐ Executive Summary</h2>
+            
+            <div class="summary-content">
+                <p id="summaryOverview">
+                    <!-- Will be populated by JavaScript -->
+                </p>
+                
+                <div class="summary-metrics">
+                    <div class="summary-metric">
+                        <span class="summary-metric-value" id="metricProducts">50</span>
+                        <span class="summary-metric-label">Total Products</span>
+                    </div>
+                    <div class="summary-metric">
+                        <span class="summary-metric-value" id="metricBudget">€205M</span>
+                        <span class="summary-metric-label">Portfolio Budget</span>
+                    </div>
+                    <div class="summary-metric">
+                        <span class="summary-metric-value" id="metricHealth">72%</span>
+                        <span class="summary-metric-label">Health Score</span>
+                    </div>
+                    <div class="summary-metric">
+                        <span class="summary-metric-value" id="metricStars">9</span>
+                        <span class="summary-metric-label">Star Products</span>
+                    </div>
+                </div>
+                
+                <div class="summary-highlights">
+                    <div class="summary-highlight">
+                        <h3>🎯 Strategic Priorities</h3>
+                        <ul id="strategicPriorities">
+                            <!-- Will be populated by JavaScript -->
+                        </ul>
+                    </div>
+                    
+                    <div class="summary-highlight">
+                        <h3>⚠️ Key Risks</h3>
+                        <ul id="keyRisks">
+                            <!-- Will be populated by JavaScript -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        </div>
+    </div>
+    <script>
+        // Portfolio timeline data (5 quarters)
+        const portfolioTimeline = {
+            "Q1-2025": [
+                        {
+                                    "name": "Login",
+                                    "business_score": 92.56705946435588,
+                                    "lifecycle": "BETA",
+                                    "tiering": 1,
+                                    "tech_performance": 83.3016071868122,
+                                    "budget_m": 4.4
+                        },
+                        {
+                                    "name": "OneMarketConnect",
+                                    "business_score": 71.92375515038982,
+                                    "lifecycle": "BETA",
+                                    "tiering": 2,
+                                    "tech_performance": 48.34229342950708,
+                                    "budget_m": 2.5
+                        },
+                        {
+                                    "name": "Decathlon Activities",
+                                    "business_score": 48.251370771995575,
+                                    "lifecycle": "END_OF_SUPPORT",
+                                    "tiering": 2,
+                                    "tech_performance": 16.77710238751301,
+                                    "budget_m": 6.9
+                        },
+                        {
+                                    "name": "OneCheckout",
+                                    "business_score": 100,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 67.85499214542283,
+                                    "budget_m": 12.4
+                        },
+                        {
+                                    "name": "Pixl",
+                                    "business_score": 38.77082716655366,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 85.20770126739977,
+                                    "budget_m": 1.0
+                        },
+                        {
+                                    "name": "OnePromotion",
+                                    "business_score": 63.3624105957354,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 58.75835461097054,
+                                    "budget_m": 0.6
+                        },
+                        {
+                                    "name": "OneReturn",
+                                    "business_score": 31.158867739751777,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 3,
+                                    "tech_performance": 57.36237007871366,
+                                    "budget_m": 3.1
+                        },
+                        {
+                                    "name": "Purchase",
+                                    "business_score": 53.15218991145236,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 94.02993748377824,
+                                    "budget_m": 5.1
+                        },
+                        {
+                                    "name": "Posdata",
+                                    "business_score": 100,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 97.43003535835541,
+                                    "budget_m": 7.0
+                        },
+                        {
+                                    "name": "Masterprice",
+                                    "business_score": 87.31403529005162,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 75.38668917626478,
+                                    "budget_m": 1.7
+                        },
+                        {
+                                    "name": "Body",
+                                    "business_score": 41.76529554561077,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 75.23067125697793,
+                                    "budget_m": 3.1
+                        },
+                        {
+                                    "name": "Poslog Manager",
+                                    "business_score": 28.14310851532275,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 3,
+                                    "tech_performance": 52.400163823488086,
+                                    "budget_m": 2.3
+                        },
+                        {
+                                    "name": "Consent",
+                                    "business_score": 87.6034685377637,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 99.70709750277862,
+                                    "budget_m": 7.2
+                        },
+                        {
+                                    "name": "OneQuotation",
+                                    "business_score": 94.8586691890963,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 96.10753136124977,
+                                    "budget_m": 16.2
+                        },
+                        {
+                                    "name": "Identity",
+                                    "business_score": 91.83446354480228,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 79.51914262377902,
+                                    "budget_m": 9.5
+                        },
+                        {
+                                    "name": "OneInvoice",
+                                    "business_score": 43.54993863485673,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 100,
+                                    "budget_m": 4.8
+                        },
+                        {
+                                    "name": "OneOM",
+                                    "business_score": 97.28136835488812,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 100,
+                                    "budget_m": 7.9
+                        },
+                        {
+                                    "name": "Poslog Validation",
+                                    "business_score": 31.309886923547367,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 3,
+                                    "tech_performance": 84.5875047777921,
+                                    "budget_m": 0.9
+                        },
+                        {
+                                    "name": "member legal entities",
+                                    "business_score": 78.43650359308064,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 92.42232397046223,
+                                    "budget_m": 10.3
+                        },
+                        {
+                                    "name": "onepay-v2",
+                                    "business_score": 72.24384630381084,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 96.62307250938026,
+                                    "budget_m": 12.4
+                        },
+                        {
+                                    "name": "iCheck",
+                                    "business_score": 67.59002240994883,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 74.07640113797461,
+                                    "budget_m": 8.4
+                        },
+                        {
+                                    "name": "OneCatalog",
+                                    "business_score": 45.98015477691283,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 66.26337898443049,
+                                    "budget_m": 4.6
+                        },
+                        {
+                                    "name": "Origami",
+                                    "business_score": 14.664822529744063,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 4,
+                                    "tech_performance": 52.780327418628346,
+                                    "budget_m": 0.9
+                        },
+                        {
+                                    "name": "Transline",
+                                    "business_score": 28.60137503951035,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 73.16805723521607,
+                                    "budget_m": 0.5
+                        },
+                        {
+                                    "name": "OneFF",
+                                    "business_score": 90.78728162983911,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 100,
+                                    "budget_m": 15.8
+                        },
+                        {
+                                    "name": "Geolocation - Address",
+                                    "business_score": 91.65465118278287,
+                                    "lifecycle": "BETA",
+                                    "tiering": 1,
+                                    "tech_performance": 74.65000957314075,
+                                    "budget_m": 9.4
+                        },
+                        {
+                                    "name": "onewallet",
+                                    "business_score": 38.69437325704816,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 89.22532400220041,
+                                    "budget_m": 2.1
+                        },
+                        {
+                                    "name": "OnePartner",
+                                    "business_score": 45.927241675053054,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 3,
+                                    "tech_performance": 79.35044213299726,
+                                    "budget_m": 2.1
+                        },
+                        {
+                                    "name": "oneComm",
+                                    "business_score": 33.88403224788958,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 3,
+                                    "tech_performance": 74.96604019914237,
+                                    "budget_m": 1.5
+                        },
+                        {
+                                    "name": "Member Lead",
+                                    "business_score": 21.0043297857136,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 3,
+                                    "tech_performance": 81.37785250766987,
+                                    "budget_m": 1.6
+                        },
+                        {
+                                    "name": "onepay-v1",
+                                    "business_score": 38.23343796661491,
+                                    "lifecycle": "END_OF_LIFE",
+                                    "tiering": 3,
+                                    "tech_performance": 10,
+                                    "budget_m": 2.9
+                        },
+                        {
+                                    "name": "Sphere",
+                                    "business_score": 9.551607612846695,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 4,
+                                    "tech_performance": 65.39450379751881,
+                                    "budget_m": 1.1
+                        },
+                        {
+                                    "name": "Sport",
+                                    "business_score": 45.288022335177494,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 84.6240535522437,
+                                    "budget_m": 2.2
+                        },
+                        {
+                                    "name": "User Generated Content Platform",
+                                    "business_score": 47.0698348919975,
+                                    "lifecycle": "BETA",
+                                    "tiering": 2,
+                                    "tech_performance": 54.32955109713963,
+                                    "budget_m": 6.1
+                        },
+                        {
+                                    "name": "OneCusto",
+                                    "business_score": 0.18773515587179368,
+                                    "lifecycle": "ALPHA",
+                                    "tiering": null,
+                                    "tech_performance": 30.58881777214686,
+                                    "budget_m": 1.2
+                        },
+                        {
+                                    "name": "Digital Twin",
+                                    "business_score": 0,
+                                    "lifecycle": "BETA",
+                                    "tiering": null,
+                                    "tech_performance": 70.27706935907854,
+                                    "budget_m": 1.6
+                        },
+                        {
+                                    "name": "OnePrice",
+                                    "business_score": 59.773387083040156,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 64.50671521787037,
+                                    "budget_m": 8.4
+                        },
+                        {
+                                    "name": "OneSubscribe",
+                                    "business_score": 40.202755579490685,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 57.72176019544048,
+                                    "budget_m": 0.3
+                        },
+                        {
+                                    "name": "OneProduct AggregateSpreadImprove",
+                                    "business_score": 27.033798197278436,
+                                    "lifecycle": "END_OF_SUPPORT",
+                                    "tiering": 3,
+                                    "tech_performance": 23.329726241272848,
+                                    "budget_m": 2.9
+                        },
+                        {
+                                    "name": "Member Store",
+                                    "business_score": 43.06748628463693,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 63.21993061086249,
+                                    "budget_m": 0.6
+                        },
+                        {
+                                    "name": "FBD Connector",
+                                    "business_score": 53.840055879970606,
+                                    "lifecycle": "ALPHA",
+                                    "tiering": 2,
+                                    "tech_performance": 23.395778347862283,
+                                    "budget_m": 2.4
+                        },
+                        {
+                                    "name": "OneTax",
+                                    "business_score": 55.26887079164058,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 50.530801799445285,
+                                    "budget_m": 6.5
+                        },
+                        {
+                                    "name": "Poolparty",
+                                    "business_score": 7.874361247677419,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 48.44625274164558,
+                                    "budget_m": 0.8
+                        },
+                        {
+                                    "name": "OneTranslate",
+                                    "business_score": 55.63536593889452,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 70.04221993621093,
+                                    "budget_m": 1.8
+                        },
+                        {
+                                    "name": "Brightcove",
+                                    "business_score": 0.05326007908848229,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 61.20742927340358,
+                                    "budget_m": 1.7
+                        },
+                        {
+                                    "name": "Phrase",
+                                    "business_score": 45.934345378345725,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 68.6861739315482,
+                                    "budget_m": 1.4
+                        },
+                        {
+                                    "name": "Profile Completion Rate",
+                                    "business_score": 6.73066595283866,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 44.97627446979401,
+                                    "budget_m": 0.8
+                        },
+                        {
+                                    "name": "Streaming Platform",
+                                    "business_score": 12.772921855576177,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 71.77552718655552,
+                                    "budget_m": 0.5
+                        },
+                        {
+                                    "name": "OneContent",
+                                    "business_score": 0.8099131237943489,
+                                    "lifecycle": "BETA",
+                                    "tiering": null,
+                                    "tech_performance": 34.10169562563204,
+                                    "budget_m": 2.1
+                        },
+                        {
+                                    "name": "OneBooking",
+                                    "business_score": 44.267950191865886,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 3,
+                                    "tech_performance": 60.43016620643334,
+                                    "budget_m": 0.7
+                        }
+            ],
+            "Q2-2025": [
+                        {
+                                    "name": "Login",
+                                    "business_score": 93.5384907963821,
+                                    "lifecycle": "BETA",
+                                    "tiering": 1,
+                                    "tech_performance": 85.94195165598289,
+                                    "budget_m": 5.0
+                        },
+                        {
+                                    "name": "OneMarketConnect",
+                                    "business_score": 63.21587002033185,
+                                    "lifecycle": "BETA",
+                                    "tiering": 2,
+                                    "tech_performance": 58.927934153548804,
+                                    "budget_m": 2.3
+                        },
+                        {
+                                    "name": "Decathlon Activities",
+                                    "business_score": 40.914048726573725,
+                                    "lifecycle": "END_OF_SUPPORT",
+                                    "tiering": 2,
+                                    "tech_performance": 16.702592210177585,
+                                    "budget_m": 6.3
+                        },
+                        {
+                                    "name": "OneCheckout",
+                                    "business_score": 96.51230743981966,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 82.3908903644579,
+                                    "budget_m": 11.8
+                        },
+                        {
+                                    "name": "Pixl",
+                                    "business_score": 30.639430567216582,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 81.66784082950518,
+                                    "budget_m": 0.9
+                        },
+                        {
+                                    "name": "OnePromotion",
+                                    "business_score": 72.49460838232285,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 62.81470079674065,
+                                    "budget_m": 0.7
+                        },
+                        {
+                                    "name": "OneReturn",
+                                    "business_score": 26.4034474962085,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 3,
+                                    "tech_performance": 69.89939568203499,
+                                    "budget_m": 3.0
+                        },
+                        {
+                                    "name": "Purchase",
+                                    "business_score": 47.42686145695639,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 81.75704480187483,
+                                    "budget_m": 5.5
+                        },
+                        {
+                                    "name": "Posdata",
+                                    "business_score": 93.19204726325424,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 86.1880115692536,
+                                    "budget_m": 6.2
+                        },
+                        {
+                                    "name": "Masterprice",
+                                    "business_score": 79.06134352022326,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 78.39771987761804,
+                                    "budget_m": 1.8
+                        },
+                        {
+                                    "name": "Body",
+                                    "business_score": 50.907468153601236,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 67.15105916352084,
+                                    "budget_m": 3.3
+                        },
+                        {
+                                    "name": "Poslog Manager",
+                                    "business_score": 30.144741815964522,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 3,
+                                    "tech_performance": 64.22379125711717,
+                                    "budget_m": 2.1
+                        },
+                        {
+                                    "name": "Consent",
+                                    "business_score": 96.8868730993632,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 97.71927406293646,
+                                    "budget_m": 7.2
+                        },
+                        {
+                                    "name": "OneQuotation",
+                                    "business_score": 88.18186119493633,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 88.50555137349032,
+                                    "budget_m": 14.3
+                        },
+                        {
+                                    "name": "Identity",
+                                    "business_score": 99.70692393958058,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 93.69701362654428,
+                                    "budget_m": 10.3
+                        },
+                        {
+                                    "name": "OneInvoice",
+                                    "business_score": 52.793388589574334,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 89.08270590679273,
+                                    "budget_m": 5.5
+                        },
+                        {
+                                    "name": "OneOM",
+                                    "business_score": 89.41837492780084,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 99.45911465149807,
+                                    "budget_m": 7.1
+                        },
+                        {
+                                    "name": "Poslog Validation",
+                                    "business_score": 33.11873610981084,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 3,
+                                    "tech_performance": 72.37159820544316,
+                                    "budget_m": 1.0
+                        },
+                        {
+                                    "name": "member legal entities",
+                                    "business_score": 70.26715059438216,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 87.23581876183451,
+                                    "budget_m": 9.8
+                        },
+                        {
+                                    "name": "onepay-v2",
+                                    "business_score": 72.90666956328977,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 90.65946618726943,
+                                    "budget_m": 13.6
+                        },
+                        {
+                                    "name": "iCheck",
+                                    "business_score": 69.26924721555048,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 86.96410749580139,
+                                    "budget_m": 7.7
+                        },
+                        {
+                                    "name": "OneCatalog",
+                                    "business_score": 53.24456286572749,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 73.64786500472549,
+                                    "budget_m": 4.8
+                        },
+                        {
+                                    "name": "Origami",
+                                    "business_score": 23.121607179037134,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 4,
+                                    "tech_performance": 51.954255834307055,
+                                    "budget_m": 1.0
+                        },
+                        {
+                                    "name": "Transline",
+                                    "business_score": 33.96728570465756,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 61.57306778378285,
+                                    "budget_m": 0.4
+                        },
+                        {
+                                    "name": "OneFF",
+                                    "business_score": 94.679891681318,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 99.64525352206128,
+                                    "budget_m": 15.0
+                        },
+                        {
+                                    "name": "Geolocation - Address",
+                                    "business_score": 84.34042915835025,
+                                    "lifecycle": "BETA",
+                                    "tiering": 1,
+                                    "tech_performance": 81.77442451991277,
+                                    "budget_m": 9.7
+                        },
+                        {
+                                    "name": "onewallet",
+                                    "business_score": 38.59478444992781,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 77.10120362029815,
+                                    "budget_m": 2.3
+                        },
+                        {
+                                    "name": "OnePartner",
+                                    "business_score": 46.42131211602096,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 3,
+                                    "tech_performance": 78.05208440514792,
+                                    "budget_m": 1.9
+                        },
+                        {
+                                    "name": "oneComm",
+                                    "business_score": 29.93509093406471,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 3,
+                                    "tech_performance": 71.0221356861372,
+                                    "budget_m": 1.6
+                        },
+                        {
+                                    "name": "Member Lead",
+                                    "business_score": 30.24332528005055,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 3,
+                                    "tech_performance": 75.79401478115858,
+                                    "budget_m": 1.8
+                        },
+                        {
+                                    "name": "onepay-v1",
+                                    "business_score": 33.0219924683654,
+                                    "lifecycle": "END_OF_LIFE",
+                                    "tiering": 3,
+                                    "tech_performance": 19.755178027342918,
+                                    "budget_m": 2.5
+                        },
+                        {
+                                    "name": "Sphere",
+                                    "business_score": 10.881587195689278,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 4,
+                                    "tech_performance": 75.23458108548175,
+                                    "budget_m": 1.1
+                        },
+                        {
+                                    "name": "Sport",
+                                    "business_score": 44.927592521166375,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 74.06580211616549,
+                                    "budget_m": 2.2
+                        },
+                        {
+                                    "name": "User Generated Content Platform",
+                                    "business_score": 48.33914139454502,
+                                    "lifecycle": "BETA",
+                                    "tiering": 2,
+                                    "tech_performance": 67.36930180018126,
+                                    "budget_m": 6.6
+                        },
+                        {
+                                    "name": "OneCusto",
+                                    "business_score": 0,
+                                    "lifecycle": "ALPHA",
+                                    "tiering": null,
+                                    "tech_performance": 32.655797010531224,
+                                    "budget_m": 1.3
+                        },
+                        {
+                                    "name": "Digital Twin",
+                                    "business_score": 0,
+                                    "lifecycle": "BETA",
+                                    "tiering": null,
+                                    "tech_performance": 76.0138776952594,
+                                    "budget_m": 1.6
+                        },
+                        {
+                                    "name": "OnePrice",
+                                    "business_score": 62.67870057415963,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 75.0382294901397,
+                                    "budget_m": 7.5
+                        },
+                        {
+                                    "name": "OneSubscribe",
+                                    "business_score": 33.95059188349015,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 72.688359336362,
+                                    "budget_m": 0.3
+                        },
+                        {
+                                    "name": "OneProduct AggregateSpreadImprove",
+                                    "business_score": 36.79051687278002,
+                                    "lifecycle": "END_OF_SUPPORT",
+                                    "tiering": 3,
+                                    "tech_performance": 19.959111987183388,
+                                    "budget_m": 2.5
+                        },
+                        {
+                                    "name": "Member Store",
+                                    "business_score": 52.31050673716282,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 61.276834503902165,
+                                    "budget_m": 0.7
+                        },
+                        {
+                                    "name": "FBD Connector",
+                                    "business_score": 48.516296915392886,
+                                    "lifecycle": "ALPHA",
+                                    "tiering": 2,
+                                    "tech_performance": 28.647313292382886,
+                                    "budget_m": 2.7
+                        },
+                        {
+                                    "name": "OneTax",
+                                    "business_score": 46.3635282723204,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 58.22346924902099,
+                                    "budget_m": 7.2
+                        },
+                        {
+                                    "name": "Poolparty",
+                                    "business_score": 4.6601688881949,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 62.20520216833842,
+                                    "budget_m": 0.8
+                        },
+                        {
+                                    "name": "OneTranslate",
+                                    "business_score": 49.7807762083324,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 70.16204387000361,
+                                    "budget_m": 2.0
+                        },
+                        {
+                                    "name": "Brightcove",
+                                    "business_score": 4.9836113044206,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 66.95768218101101,
+                                    "budget_m": 1.5
+                        },
+                        {
+                                    "name": "Phrase",
+                                    "business_score": 36.88750658827164,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 65.23739388264377,
+                                    "budget_m": 1.4
+                        },
+                        {
+                                    "name": "Profile Completion Rate",
+                                    "business_score": 0,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 59.28388803509933,
+                                    "budget_m": 0.9
+                        },
+                        {
+                                    "name": "Streaming Platform",
+                                    "business_score": 2.968814520817622,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 81.5048528944696,
+                                    "budget_m": 0.5
+                        },
+                        {
+                                    "name": "OneContent",
+                                    "business_score": 0,
+                                    "lifecycle": "BETA",
+                                    "tiering": null,
+                                    "tech_performance": 39.95032673124249,
+                                    "budget_m": 1.9
+                        },
+                        {
+                                    "name": "OneBooking",
+                                    "business_score": 41.04562727693006,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 3,
+                                    "tech_performance": 52.20552869145194,
+                                    "budget_m": 0.8
+                        }
+            ],
+            "Q3-2025": [
+                        {
+                                    "name": "Login",
+                                    "business_score": 90.1033501547495,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 77.89349652208017,
+                                    "budget_m": 5.3
+                        },
+                        {
+                                    "name": "OneMarketConnect",
+                                    "business_score": 58.94803184796072,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 64.30890201937109,
+                                    "budget_m": 2.1
+                        },
+                        {
+                                    "name": "Decathlon Activities",
+                                    "business_score": 46.75239942977907,
+                                    "lifecycle": "END_OF_SUPPORT",
+                                    "tiering": 2,
+                                    "tech_performance": 20.985517154784173,
+                                    "budget_m": 6.2
+                        },
+                        {
+                                    "name": "OneCheckout",
+                                    "business_score": 97.10841455364078,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 89.99123816479081,
+                                    "budget_m": 10.8
+                        },
+                        {
+                                    "name": "Pixl",
+                                    "business_score": 37.3732278701881,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 77.0748298120032,
+                                    "budget_m": 0.8
+                        },
+                        {
+                                    "name": "OnePromotion",
+                                    "business_score": 74.26782531984051,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 65.87691797916445,
+                                    "budget_m": 0.7
+                        },
+                        {
+                                    "name": "OneReturn",
+                                    "business_score": 25.625748659387064,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 3,
+                                    "tech_performance": 60.67173664056456,
+                                    "budget_m": 3.1
+                        },
+                        {
+                                    "name": "Purchase",
+                                    "business_score": 50.79879822644056,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 82.60609761183265,
+                                    "budget_m": 5.4
+                        },
+                        {
+                                    "name": "Posdata",
+                                    "business_score": 90.19397566103856,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 88.26067989930475,
+                                    "budget_m": 5.6
+                        },
+                        {
+                                    "name": "Masterprice",
+                                    "business_score": 76.74649223201776,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 78.33906424336132,
+                                    "budget_m": 1.7
+                        },
+                        {
+                                    "name": "Body",
+                                    "business_score": 44.68160412529992,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 67.57741889038664,
+                                    "budget_m": 3.4
+                        },
+                        {
+                                    "name": "Poslog Manager",
+                                    "business_score": 31.057910227450346,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 3,
+                                    "tech_performance": 55.18337359121184,
+                                    "budget_m": 2.2
+                        },
+                        {
+                                    "name": "Consent",
+                                    "business_score": 97.32801357029922,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 94.74725591020291,
+                                    "budget_m": 7.4
+                        },
+                        {
+                                    "name": "OneQuotation",
+                                    "business_score": 89.88675590699268,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 94.96861031731235,
+                                    "budget_m": 14.3
+                        },
+                        {
+                                    "name": "Identity",
+                                    "business_score": 100,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 98.34647762673674,
+                                    "budget_m": 9.2
+                        },
+                        {
+                                    "name": "OneInvoice",
+                                    "business_score": 56.99825834148693,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 81.10162110680089,
+                                    "budget_m": 5.0
+                        },
+                        {
+                                    "name": "OneOM",
+                                    "business_score": 92.50440255731894,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 94.04497502114481,
+                                    "budget_m": 7.7
+                        },
+                        {
+                                    "name": "Poslog Validation",
+                                    "business_score": 36.53556810419329,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 3,
+                                    "tech_performance": 72.59179744414627,
+                                    "budget_m": 0.9
+                        },
+                        {
+                                    "name": "member legal entities",
+                                    "business_score": 76.36561743722724,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 91.9484887053417,
+                                    "budget_m": 9.2
+                        },
+                        {
+                                    "name": "onepay-v2",
+                                    "business_score": 66.5757132835799,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 85.08753490111721,
+                                    "budget_m": 12.9
+                        },
+                        {
+                                    "name": "iCheck",
+                                    "business_score": 67.13601869506533,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 80.78222617009743,
+                                    "budget_m": 8.6
+                        },
+                        {
+                                    "name": "OneCatalog",
+                                    "business_score": 49.13678655031988,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 69.64523745871873,
+                                    "budget_m": 4.9
+                        },
+                        {
+                                    "name": "Origami",
+                                    "business_score": 17.59210985981853,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 4,
+                                    "tech_performance": 59.10259725537285,
+                                    "budget_m": 1.1
+                        },
+                        {
+                                    "name": "Transline",
+                                    "business_score": 36.25513406002255,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 67.70790515037226,
+                                    "budget_m": 0.4
+                        },
+                        {
+                                    "name": "OneFF",
+                                    "business_score": 94.12980699799178,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 96.20538711292009,
+                                    "budget_m": 13.4
+                        },
+                        {
+                                    "name": "Geolocation - Address",
+                                    "business_score": 79.63915192050484,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 81.41543498793341,
+                                    "budget_m": 10.6
+                        },
+                        {
+                                    "name": "onewallet",
+                                    "business_score": 38.326156799863696,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 73.86394811878976,
+                                    "budget_m": 2.1
+                        },
+                        {
+                                    "name": "OnePartner",
+                                    "business_score": 40.54766282520731,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 3,
+                                    "tech_performance": 68.75755942057614,
+                                    "budget_m": 2.0
+                        },
+                        {
+                                    "name": "oneComm",
+                                    "business_score": 31.77483448145363,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 3,
+                                    "tech_performance": 75.42191443435449,
+                                    "budget_m": 1.7
+                        },
+                        {
+                                    "name": "Member Lead",
+                                    "business_score": 23.816074235204727,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 3,
+                                    "tech_performance": 83.50972898073967,
+                                    "budget_m": 1.8
+                        },
+                        {
+                                    "name": "onepay-v1",
+                                    "business_score": 31.45219992235249,
+                                    "lifecycle": "END_OF_LIFE",
+                                    "tiering": 3,
+                                    "tech_performance": 10,
+                                    "budget_m": 2.3
+                        },
+                        {
+                                    "name": "Sphere",
+                                    "business_score": 6.012153668043859,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 4,
+                                    "tech_performance": 75.20070512237857,
+                                    "budget_m": 1.0
+                        },
+                        {
+                                    "name": "Sport",
+                                    "business_score": 49.397905431112726,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 72.1011472877603,
+                                    "budget_m": 2.3
+                        },
+                        {
+                                    "name": "User Generated Content Platform",
+                                    "business_score": 52.873649565673446,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 72.34967426329445,
+                                    "budget_m": 6.8
+                        },
+                        {
+                                    "name": "OneCusto",
+                                    "business_score": 0.006378037016737004,
+                                    "lifecycle": "ALPHA",
+                                    "tiering": null,
+                                    "tech_performance": 25.764071871845623,
+                                    "budget_m": 1.4
+                        },
+                        {
+                                    "name": "Digital Twin",
+                                    "business_score": 0,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 70.30159131565375,
+                                    "budget_m": 1.4
+                        },
+                        {
+                                    "name": "OnePrice",
+                                    "business_score": 61.875836673287765,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 76.09640838885501,
+                                    "budget_m": 7.2
+                        },
+                        {
+                                    "name": "OneSubscribe",
+                                    "business_score": 40.15961606973099,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 75.26692812848613,
+                                    "budget_m": 0.3
+                        },
+                        {
+                                    "name": "OneProduct AggregateSpreadImprove",
+                                    "business_score": 38.78935626423038,
+                                    "lifecycle": "END_OF_SUPPORT",
+                                    "tiering": 3,
+                                    "tech_performance": 14.270418714615053,
+                                    "budget_m": 2.5
+                        },
+                        {
+                                    "name": "Member Store",
+                                    "business_score": 52.16208476771531,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 63.24932635643816,
+                                    "budget_m": 0.7
+                        },
+                        {
+                                    "name": "FBD Connector",
+                                    "business_score": 48.81493956284213,
+                                    "lifecycle": "ALPHA",
+                                    "tiering": 2,
+                                    "tech_performance": 36.91679307949503,
+                                    "budget_m": 2.7
+                        },
+                        {
+                                    "name": "OneTax",
+                                    "business_score": 53.03794358037769,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 64.45814326255238,
+                                    "budget_m": 8.1
+                        },
+                        {
+                                    "name": "Poolparty",
+                                    "business_score": 5.1577930404354335,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 52.81085790255791,
+                                    "budget_m": 0.9
+                        },
+                        {
+                                    "name": "OneTranslate",
+                                    "business_score": 50.21972354106433,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 65.5301269066254,
+                                    "budget_m": 1.9
+                        },
+                        {
+                                    "name": "Brightcove",
+                                    "business_score": 2.419454490385667,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 75.65322463543511,
+                                    "budget_m": 1.4
+                        },
+                        {
+                                    "name": "Phrase",
+                                    "business_score": 31.577939201761478,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 67.53384978050424,
+                                    "budget_m": 1.3
+                        },
+                        {
+                                    "name": "Profile Completion Rate",
+                                    "business_score": 0.1151854108350081,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 58.86958546366495,
+                                    "budget_m": 1.0
+                        },
+                        {
+                                    "name": "Streaming Platform",
+                                    "business_score": 5.99217754400724,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 73.8454730579578,
+                                    "budget_m": 0.5
+                        },
+                        {
+                                    "name": "OneContent",
+                                    "business_score": 0,
+                                    "lifecycle": "BETA",
+                                    "tiering": null,
+                                    "tech_performance": 32.00570431647587,
+                                    "budget_m": 1.9
+                        },
+                        {
+                                    "name": "OneBooking",
+                                    "business_score": 40.07319256252407,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 3,
+                                    "tech_performance": 57.381786267468534,
+                                    "budget_m": 0.7
+                        }
+            ],
+            "Q4-2025": [
+                        {
+                                    "name": "Login",
+                                    "business_score": 88.87172009687865,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 83.01283252950182,
+                                    "budget_m": 5.5
+                        },
+                        {
+                                    "name": "OneMarketConnect",
+                                    "business_score": 58.99283874193446,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 67.64266603527872,
+                                    "budget_m": 2.3
+                        },
+                        {
+                                    "name": "Decathlon Activities",
+                                    "business_score": 44.63484849248786,
+                                    "lifecycle": "END_OF_SUPPORT",
+                                    "tiering": 2,
+                                    "tech_performance": 27.981673181515294,
+                                    "budget_m": 6.5
+                        },
+                        {
+                                    "name": "OneCheckout",
+                                    "business_score": 92.98318103531352,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 94.88633211042422,
+                                    "budget_m": 11.1
+                        },
+                        {
+                                    "name": "Pixl",
+                                    "business_score": 32.91684581719718,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 78.83074325635178,
+                                    "budget_m": 0.8
+                        },
+                        {
+                                    "name": "OnePromotion",
+                                    "business_score": 73.06042751224376,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 73.34205670876007,
+                                    "budget_m": 0.7
+                        },
+                        {
+                                    "name": "OneReturn",
+                                    "business_score": 26.989549642127134,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 3,
+                                    "tech_performance": 61.233009113038406,
+                                    "budget_m": 3.0
+                        },
+                        {
+                                    "name": "Purchase",
+                                    "business_score": 55.17765713103031,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 78.59201808276642,
+                                    "budget_m": 5.7
+                        },
+                        {
+                                    "name": "Posdata",
+                                    "business_score": 89.25668373300617,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 83.45987487071471,
+                                    "budget_m": 5.3
+                        },
+                        {
+                                    "name": "Masterprice",
+                                    "business_score": 79.15690351178166,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 78.9411891993875,
+                                    "budget_m": 1.7
+                        },
+                        {
+                                    "name": "Body",
+                                    "business_score": 44.24750271522622,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 68.92768290922444,
+                                    "budget_m": 3.2
+                        },
+                        {
+                                    "name": "Poslog Manager",
+                                    "business_score": 34.87760504629351,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 3,
+                                    "tech_performance": 59.4212729463531,
+                                    "budget_m": 2.3
+                        },
+                        {
+                                    "name": "Consent",
+                                    "business_score": 94.69618451436511,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 97.90877470865126,
+                                    "budget_m": 7.6
+                        },
+                        {
+                                    "name": "OneQuotation",
+                                    "business_score": 91.52031927898734,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 96.20925269146193,
+                                    "budget_m": 13.3
+                        },
+                        {
+                                    "name": "Identity",
+                                    "business_score": 100,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 94.21175668271096,
+                                    "budget_m": 9.1
+                        },
+                        {
+                                    "name": "OneInvoice",
+                                    "business_score": 52.8786717822691,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 74.72533187770931,
+                                    "budget_m": 5.0
+                        },
+                        {
+                                    "name": "OneOM",
+                                    "business_score": 88.87724896000898,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 90.09201134157382,
+                                    "budget_m": 7.5
+                        },
+                        {
+                                    "name": "Poslog Validation",
+                                    "business_score": 34.90124300714498,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 3,
+                                    "tech_performance": 71.2683238691994,
+                                    "budget_m": 1.0
+                        },
+                        {
+                                    "name": "member legal entities",
+                                    "business_score": 71.55566601498876,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 91.41019410667067,
+                                    "budget_m": 10.0
+                        },
+                        {
+                                    "name": "onepay-v2",
+                                    "business_score": 68.43663574238141,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 86.18491133117743,
+                                    "budget_m": 13.3
+                        },
+                        {
+                                    "name": "iCheck",
+                                    "business_score": 63.81983455570402,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 84.74251971524913,
+                                    "budget_m": 8.1
+                        },
+                        {
+                                    "name": "OneCatalog",
+                                    "business_score": 45.10571154485402,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 68.37766296940777,
+                                    "budget_m": 5.3
+                        },
+                        {
+                                    "name": "Origami",
+                                    "business_score": 17.013299854501984,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 4,
+                                    "tech_performance": 59.11124487625036,
+                                    "budget_m": 1.0
+                        },
+                        {
+                                    "name": "Transline",
+                                    "business_score": 36.624769674109196,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 70.17491151609894,
+                                    "budget_m": 0.4
+                        },
+                        {
+                                    "name": "OneFF",
+                                    "business_score": 96.46373881387727,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 90.65164750281447,
+                                    "budget_m": 13.4
+                        },
+                        {
+                                    "name": "Geolocation - Address",
+                                    "business_score": 80.2367856496611,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 81.77718679455971,
+                                    "budget_m": 9.9
+                        },
+                        {
+                                    "name": "onewallet",
+                                    "business_score": 33.83930519955594,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 78.01076675260424,
+                                    "budget_m": 2.1
+                        },
+                        {
+                                    "name": "OnePartner",
+                                    "business_score": 36.650206439337595,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 3,
+                                    "tech_performance": 71.85662748312161,
+                                    "budget_m": 1.9
+                        },
+                        {
+                                    "name": "oneComm",
+                                    "business_score": 29.620186436425424,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 3,
+                                    "tech_performance": 73.39210885818132,
+                                    "budget_m": 1.7
+                        },
+                        {
+                                    "name": "Member Lead",
+                                    "business_score": 25.083813307005517,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 3,
+                                    "tech_performance": 75.96229998632789,
+                                    "budget_m": 1.9
+                        },
+                        {
+                                    "name": "onepay-v1",
+                                    "business_score": 31.943480379261814,
+                                    "lifecycle": "END_OF_LIFE",
+                                    "tiering": 3,
+                                    "tech_performance": 10,
+                                    "budget_m": 2.2
+                        },
+                        {
+                                    "name": "Sphere",
+                                    "business_score": 9.221685390390727,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 4,
+                                    "tech_performance": 73.12667784805856,
+                                    "budget_m": 1.0
+                        },
+                        {
+                                    "name": "Sport",
+                                    "business_score": 49.91435628632639,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 65.81804024153094,
+                                    "budget_m": 2.4
+                        },
+                        {
+                                    "name": "User Generated Content Platform",
+                                    "business_score": 50.44521332466808,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 72.05951416815088,
+                                    "budget_m": 6.4
+                        },
+                        {
+                                    "name": "OneCusto",
+                                    "business_score": 0.7010708489889135,
+                                    "lifecycle": "ALPHA",
+                                    "tiering": null,
+                                    "tech_performance": 27.696899300099957,
+                                    "budget_m": 1.3
+                        },
+                        {
+                                    "name": "Digital Twin",
+                                    "business_score": 0,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 66.15809865912195,
+                                    "budget_m": 1.3
+                        },
+                        {
+                                    "name": "OnePrice",
+                                    "business_score": 61.12019229840173,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 71.93466056067501,
+                                    "budget_m": 7.1
+                        },
+                        {
+                                    "name": "OneSubscribe",
+                                    "business_score": 36.28832033779449,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 72.81948774327088,
+                                    "budget_m": 0.3
+                        },
+                        {
+                                    "name": "OneProduct AggregateSpreadImprove",
+                                    "business_score": 40.701316371177484,
+                                    "lifecycle": "END_OF_LIFE",
+                                    "tiering": 3,
+                                    "tech_performance": 10,
+                                    "budget_m": 2.6
+                        },
+                        {
+                                    "name": "Member Store",
+                                    "business_score": 49.53633864991985,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 68.89888634457688,
+                                    "budget_m": 0.7
+                        },
+                        {
+                                    "name": "FBD Connector",
+                                    "business_score": 50.02252490439347,
+                                    "lifecycle": "ALPHA",
+                                    "tiering": 2,
+                                    "tech_performance": 37.202901021857286,
+                                    "budget_m": 2.6
+                        },
+                        {
+                                    "name": "OneTax",
+                                    "business_score": 56.777536707397466,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 70.00318812630461,
+                                    "budget_m": 7.9
+                        },
+                        {
+                                    "name": "Poolparty",
+                                    "business_score": 2.9908424466341366,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 59.88717605458659,
+                                    "budget_m": 0.9
+                        },
+                        {
+                                    "name": "OneTranslate",
+                                    "business_score": 45.594864109833686,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 71.42826397851049,
+                                    "budget_m": 1.9
+                        },
+                        {
+                                    "name": "Brightcove",
+                                    "business_score": 0,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 75.83294557089098,
+                                    "budget_m": 1.5
+                        },
+                        {
+                                    "name": "Phrase",
+                                    "business_score": 29.71260869585163,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 74.34821719685662,
+                                    "budget_m": 1.2
+                        },
+                        {
+                                    "name": "Profile Completion Rate",
+                                    "business_score": 2.191981165773104,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 56.34141230319729,
+                                    "budget_m": 1.1
+                        },
+                        {
+                                    "name": "Streaming Platform",
+                                    "business_score": 1.1089727898422028,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 71.94742268460828,
+                                    "budget_m": 0.5
+                        },
+                        {
+                                    "name": "OneContent",
+                                    "business_score": 2.4383185020652167,
+                                    "lifecycle": "BETA",
+                                    "tiering": null,
+                                    "tech_performance": 36.91906319892361,
+                                    "budget_m": 1.8
+                        },
+                        {
+                                    "name": "OneBooking",
+                                    "business_score": 43.36369016831808,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 3,
+                                    "tech_performance": 65.06199821742933,
+                                    "budget_m": 0.7
+                        }
+            ],
+            "Q1-2026": [
+                        {
+                                    "name": "Login",
+                                    "business_score": 88,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 85,
+                                    "budget_m": 5.3
+                        },
+                        {
+                                    "name": "OneMarketConnect",
+                                    "business_score": 59,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 70,
+                                    "budget_m": 2.2
+                        },
+                        {
+                                    "name": "Decathlon Activities",
+                                    "business_score": 47,
+                                    "lifecycle": "END_OF_SUPPORT",
+                                    "tiering": 2,
+                                    "tech_performance": 26,
+                                    "budget_m": 6.3
+                        },
+                        {
+                                    "name": "OneCheckout",
+                                    "business_score": 94,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 97,
+                                    "budget_m": 10.9
+                        },
+                        {
+                                    "name": "Pixl",
+                                    "business_score": 35,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 77,
+                                    "budget_m": 0.8
+                        },
+                        {
+                                    "name": "OnePromotion",
+                                    "business_score": 76,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 74,
+                                    "budget_m": 0.7
+                        },
+                        {
+                                    "name": "OneReturn",
+                                    "business_score": 29,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 3,
+                                    "tech_performance": 58,
+                                    "budget_m": 2.9
+                        },
+                        {
+                                    "name": "Purchase",
+                                    "business_score": 53,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 76,
+                                    "budget_m": 5.7
+                        },
+                        {
+                                    "name": "Posdata",
+                                    "business_score": 88,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 84,
+                                    "budget_m": 5.5
+                        },
+                        {
+                                    "name": "Masterprice",
+                                    "business_score": 82,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 80,
+                                    "budget_m": 1.7
+                        },
+                        {
+                                    "name": "Body",
+                                    "business_score": 47,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 71,
+                                    "budget_m": 3.3
+                        },
+                        {
+                                    "name": "Poslog Manager",
+                                    "business_score": 35,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 3,
+                                    "tech_performance": 61,
+                                    "budget_m": 2.3
+                        },
+                        {
+                                    "name": "Consent",
+                                    "business_score": 94,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 95,
+                                    "budget_m": 7.7
+                        },
+                        {
+                                    "name": "OneQuotation",
+                                    "business_score": 94,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 93,
+                                    "budget_m": 13.4
+                        },
+                        {
+                                    "name": "Identity",
+                                    "business_score": 100,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 95,
+                                    "budget_m": 9.0
+                        },
+                        {
+                                    "name": "OneInvoice",
+                                    "business_score": 53,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 77,
+                                    "budget_m": 5.0
+                        },
+                        {
+                                    "name": "OneOM",
+                                    "business_score": 88,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 86,
+                                    "budget_m": 7.6
+                        },
+                        {
+                                    "name": "Poslog Validation",
+                                    "business_score": 35,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 3,
+                                    "tech_performance": 72,
+                                    "budget_m": 1.0
+                        },
+                        {
+                                    "name": "member legal entities",
+                                    "business_score": 71,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 95,
+                                    "budget_m": 9.9
+                        },
+                        {
+                                    "name": "onepay-v2",
+                                    "business_score": 71,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 84,
+                                    "budget_m": 12.9
+                        },
+                        {
+                                    "name": "iCheck",
+                                    "business_score": 65,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 84,
+                                    "budget_m": 7.8
+                        },
+                        {
+                                    "name": "OneCatalog",
+                                    "business_score": 47,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 69,
+                                    "budget_m": 5.2
+                        },
+                        {
+                                    "name": "Origami",
+                                    "business_score": 18,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 4,
+                                    "tech_performance": 63,
+                                    "budget_m": 1
+                        },
+                        {
+                                    "name": "Transline",
+                                    "business_score": 35,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 72,
+                                    "budget_m": 0.4
+                        },
+                        {
+                                    "name": "OneFF",
+                                    "business_score": 94,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 92,
+                                    "budget_m": 13.4
+                        },
+                        {
+                                    "name": "Geolocation - Address",
+                                    "business_score": 82,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 1,
+                                    "tech_performance": 86,
+                                    "budget_m": 10.4
+                        },
+                        {
+                                    "name": "onewallet",
+                                    "business_score": 35,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 74,
+                                    "budget_m": 2.0
+                        },
+                        {
+                                    "name": "OnePartner",
+                                    "business_score": 35,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 3,
+                                    "tech_performance": 68,
+                                    "budget_m": 1.9
+                        },
+                        {
+                                    "name": "oneComm",
+                                    "business_score": 29,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 3,
+                                    "tech_performance": 72,
+                                    "budget_m": 1.8
+                        },
+                        {
+                                    "name": "Member Lead",
+                                    "business_score": 24,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 3,
+                                    "tech_performance": 71,
+                                    "budget_m": 1.8
+                        },
+                        {
+                                    "name": "onepay-v1",
+                                    "business_score": 29,
+                                    "lifecycle": "END_OF_LIFE",
+                                    "tiering": 3,
+                                    "tech_performance": 10,
+                                    "budget_m": 2.2
+                        },
+                        {
+                                    "name": "Sphere",
+                                    "business_score": 12,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 4,
+                                    "tech_performance": 71,
+                                    "budget_m": 1
+                        },
+                        {
+                                    "name": "Sport",
+                                    "business_score": 47,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 69,
+                                    "budget_m": 2.4
+                        },
+                        {
+                                    "name": "User Generated Content Platform",
+                                    "business_score": 53,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 74,
+                                    "budget_m": 6.2
+                        },
+                        {
+                                    "name": "OneCusto",
+                                    "business_score": 0,
+                                    "lifecycle": "ALPHA",
+                                    "tiering": null,
+                                    "tech_performance": 23,
+                                    "budget_m": 1.4
+                        },
+                        {
+                                    "name": "Digital Twin",
+                                    "business_score": 0,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 63,
+                                    "budget_m": 1.2
+                        },
+                        {
+                                    "name": "OnePrice",
+                                    "business_score": 59,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 75,
+                                    "budget_m": 6.8
+                        },
+                        {
+                                    "name": "OneSubscribe",
+                                    "business_score": 35,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 77,
+                                    "budget_m": 0.3
+                        },
+                        {
+                                    "name": "OneProduct AggregateSpreadImprove",
+                                    "business_score": 41,
+                                    "lifecycle": "END_OF_LIFE",
+                                    "tiering": 3,
+                                    "tech_performance": 10,
+                                    "budget_m": 2.5
+                        },
+                        {
+                                    "name": "Member Store",
+                                    "business_score": 47,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 72,
+                                    "budget_m": 0.7
+                        },
+                        {
+                                    "name": "FBD Connector",
+                                    "business_score": 53,
+                                    "lifecycle": "ALPHA",
+                                    "tiering": 2,
+                                    "tech_performance": 39,
+                                    "budget_m": 2.5
+                        },
+                        {
+                                    "name": "OneTax",
+                                    "business_score": 59,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 71,
+                                    "budget_m": 8.0
+                        },
+                        {
+                                    "name": "Poolparty",
+                                    "business_score": 0,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 64,
+                                    "budget_m": 0.9
+                        },
+                        {
+                                    "name": "OneTranslate",
+                                    "business_score": 47,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 2,
+                                    "tech_performance": 67,
+                                    "budget_m": 2.0
+                        },
+                        {
+                                    "name": "Brightcove",
+                                    "business_score": 0,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 71,
+                                    "budget_m": 1.6
+                        },
+                        {
+                                    "name": "Phrase",
+                                    "business_score": 29,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 77,
+                                    "budget_m": 1.2
+                        },
+                        {
+                                    "name": "Profile Completion Rate",
+                                    "business_score": 0,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 58,
+                                    "budget_m": 1.1
+                        },
+                        {
+                                    "name": "Streaming Platform",
+                                    "business_score": 0,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": null,
+                                    "tech_performance": 73,
+                                    "budget_m": 0.5
+                        },
+                        {
+                                    "name": "OneContent",
+                                    "business_score": 0,
+                                    "lifecycle": "BETA",
+                                    "tiering": null,
+                                    "tech_performance": 39,
+                                    "budget_m": 1.8
+                        },
+                        {
+                                    "name": "OneBooking",
+                                    "business_score": 41,
+                                    "lifecycle": "GENERAL_AVAILABILITY",
+                                    "tiering": 3,
+                                    "tech_performance": 67,
+                                    "budget_m": 0.7
+                        }
+            ]
+};
+
+        const quarters = ["Q1-2025", "Q2-2025", "Q3-2025", "Q4-2025", "Q1-2026"];
+
+        // Use Q1-2026 data from timeline as initial state
+        const portfolioData = {
+            products: portfolioTimeline["Q1-2026"]
+        };
+
+        const lifecycleColors = {
+            "GENERAL_AVAILABILITY": "#10b981",
+            "BETA": "#3b82f6",
+            "ALPHA": "#f59e0b",
+            "END_OF_LIFE": "#ef4444",
+            "END_OF_SUPPORT": "#8b5cf6"
+        };
+
+        const data = {
+            datasets: portfolioData.products.map(p => ({
+                label: p.name,
+                data: [{
+                    x: p.tech_performance,
+                    y: p.business_score,
+                    r: Math.sqrt(p.budget_m) * 4
+                }],
+                backgroundColor: lifecycleColors[p.lifecycle],
+                borderColor: 'rgba(255, 255, 255, 0.8)',
+                borderWidth: 2
+            }))
+        };
+
+        // Chart reference for timeline updates
+        let mainChart = null;
+
+        const ctx = document.getElementById('portfolioChart').getContext('2d');
+        mainChart = new Chart(ctx, {
+            type: 'bubble',
+            data: data,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(26, 32, 44, 0.95)',
+                        titleFont: { size: 14, weight: 'bold' },
+                        bodyFont: { size: 12 },
+                        padding: 12,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: function(context) {
+                                const product = portfolioData.products.find(p => p.name === context.dataset.label);
+                                return [
+                                    `Product: ${product.name}`,
+                                    `Tech Performance: ${product.tech_performance}/100`,
+                                    `Business Score: ${product.business_score}/100`,
+                                    `Budget: €${product.budget_m}M`,
+                                    `Lifecycle: ${product.lifecycle}`,
+                                    `Tiering: ${product.tiering || 'Unclassified'}`
+                                ];
+                            }
+                        }
+                    },
+                    annotation: {
+                        annotations: {
+                            verticalLine: { type: 'line', xMin: 50, xMax: 50, borderColor: '#cbd5e0', borderWidth: 3, borderDash: [10, 5] },
+                            horizontalLine: { type: 'line', yMin: 50, yMax: 50, borderColor: '#cbd5e0', borderWidth: 3, borderDash: [10, 5] },
+                            investLabel: { type: 'label', xValue: 75, yValue: 95, content: '🚀 INVEST', font: { size: 16, weight: 'bold' }, color: '#047857', backgroundColor: 'rgba(209, 250, 229, 0.9)', padding: 8, borderRadius: 6 },
+                            improveLabel: { type: 'label', xValue: 25, yValue: 95, content: '🔧 IMPROVE', font: { size: 16, weight: 'bold' }, color: '#d97706', backgroundColor: 'rgba(254, 243, 199, 0.9)', padding: 8, borderRadius: 6 },
+                            maintainLabel: { type: 'label', xValue: 75, yValue: 5, content: '⚙️ MAINTAIN', font: { size: 16, weight: 'bold' }, color: '#1e40af', backgroundColor: 'rgba(219, 234, 254, 0.9)', padding: 8, borderRadius: 6 },
+                            eliminateLabel: { type: 'label', xValue: 25, yValue: 5, content: '🗑️ ELIMINATE', font: { size: 16, weight: 'bold' }, color: '#b91c1c', backgroundColor: 'rgba(254, 226, 226, 0.9)', padding: 8, borderRadius: 6 }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: { display: true, text: 'TECH PERFORMANCE →', font: { size: 16, weight: 'bold' }, color: '#2d3748' },
+                        min: 0, max: 100,
+                        ticks: { font: { size: 12 }, color: '#4a5568' },
+                        grid: { color: 'rgba(226, 232, 240, 0.5)', lineWidth: 1 }
+                    },
+                    y: {
+                        title: { display: true, text: 'BUSINESS VALUE →', font: { size: 16, weight: 'bold' }, color: '#2d3748' },
+                        min: 0, max: 100,
+                        ticks: { font: { size: 12 }, color: '#4a5568' },
+                        grid: { color: 'rgba(226, 232, 240, 0.5)', lineWidth: 1 }
+                    }
+                }
+            }
+        });
+
+
+
+        // Lifecycle chart instances
+        let lifecycleCountChart = null;
+        let lifecycleBudgetChart = null;
+        
+        // Initialize lifecycle charts
+        function initLifecycleCharts() {
+            const ctxCount = document.getElementById('lifecycleCountChart').getContext('2d');
+            lifecycleCountChart = new Chart(ctxCount, {
+                type: 'doughnut',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: [],
+                        borderWidth: 3,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 15,
+                                font: { size: 12, weight: '600' },
+                                color: '#334155'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            const ctxBudget = document.getElementById('lifecycleBudgetChart').getContext('2d');
+            lifecycleBudgetChart = new Chart(ctxBudget, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Budget (€M)',
+                        data: [],
+                        backgroundColor: [],
+                        borderColor: [],
+                        borderWidth: 2,
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '€' + value + 'M';
+                                },
+                                font: { size: 11 },
+                                color: '#64748b'
+                            },
+                            grid: { color: '#e2e8f0' }
+                        },
+                        x: {
+                            ticks: {
+                                font: { size: 11, weight: '600' },
+                                color: '#334155'
+                            },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Update lifecycle charts with current quarter data
+        function updateLifecycleCharts(products) {
+            // Calculate lifecycle statistics
+            const lifecycleStats = {};
+            products.forEach(p => {
+                if (!lifecycleStats[p.lifecycle]) {
+                    lifecycleStats[p.lifecycle] = {
+                        count: 0,
+                        budget: 0,
+                        businessScores: [],
+                        techScores: []
+                    };
+                }
+                lifecycleStats[p.lifecycle].count++;
+                lifecycleStats[p.lifecycle].budget += p.budget_m;
+                lifecycleStats[p.lifecycle].businessScores.push(p.business_score);
+                lifecycleStats[p.lifecycle].techScores.push(p.tech_performance);
+            });
+            
+            // Prepare data for charts
+            const labels = [];
+            const counts = [];
+            const budgets = [];
+            const colors = [];
+            
+            Object.keys(lifecycleStats).sort().forEach(lifecycle => {
+                labels.push(lifecycle.replace(/_/g, ' '));
+                counts.push(lifecycleStats[lifecycle].count);
+                budgets.push(lifecycleStats[lifecycle].budget);
+                colors.push(lifecycleColors[lifecycle] || '#999');
+            });
+            
+            // Update count chart
+            if (lifecycleCountChart) {
+                lifecycleCountChart.data.labels = labels;
+                lifecycleCountChart.data.datasets[0].data = counts;
+                lifecycleCountChart.data.datasets[0].backgroundColor = colors;
+                lifecycleCountChart.update('none');
+            }
+            
+            // Update budget chart
+            if (lifecycleBudgetChart) {
+                lifecycleBudgetChart.data.labels = labels.map(l => l.substring(0, 15));
+                lifecycleBudgetChart.data.datasets[0].data = budgets;
+                lifecycleBudgetChart.data.datasets[0].backgroundColor = colors.map(c => c + 'CC');
+                lifecycleBudgetChart.data.datasets[0].borderColor = colors;
+                lifecycleBudgetChart.update('none');
+            }
+            
+            // Update stats panel
+            let statsHtml = '';
+            Object.keys(lifecycleStats).sort().forEach(lifecycle => {
+                const stats = lifecycleStats[lifecycle];
+                const avgBusiness = stats.businessScores.reduce((a,b) => a+b, 0) / stats.count;
+                const avgTech = stats.techScores.reduce((a,b) => a+b, 0) / stats.count;
+                
+                statsHtml += `
+                    <div style="background: linear-gradient(135deg, ${lifecycleColors[lifecycle]}15 0%, #ffffff 100%); 
+                                border-left: 4px solid ${lifecycleColors[lifecycle]}; 
+                                border-radius: 8px; padding: 12px; margin-bottom: 10px;">
+                        <div style="font-weight: 700; color: #0f172a; margin-bottom: 6px;">
+                            ${lifecycle.replace(/_/g, ' ')}
+                        </div>
+                        <div style="display: flex; gap: 15px; font-size: 13px; color: #475569;">
+                            <span><strong>${stats.count}</strong> products</span>
+                            <span><strong>€${stats.budget.toFixed(1)}M</strong> budget</span>
+                        </div>
+                        <div style="font-size: 12px; color: #64748b; margin-top: 6px;">
+                            Avg: Business ${avgBusiness.toFixed(1)} | Tech ${avgTech.toFixed(1)}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            const statsPanel = document.getElementById('lifecycleStatsContent');
+            if (statsPanel) {
+                statsPanel.innerHTML = statsHtml;
+            }
+        }
+        
+        // Timeline slider functionality
+
+        
+
+        // Strategy classification based on business score and tech performance
+        function classifyStrategy(businessScore, techPerformance) {
+            // D - Accelerate: High business value + High tech
+            if (businessScore > 75 && techPerformance > 80) {
+                return { id: 'accelerate', name: 'D - Accelerate', icon: '🚀', 
+                         action: 'Continue investment, scale globally, optimize for maximum ROI' };
+            }
+            // G - Replace or Buy: High business value + Low tech
+            if (businessScore > 60 && techPerformance < 40) {
+                return { id: 'replace', name: 'G - Replace or Buy', icon: '🔄',
+                         action: 'Critical tech debt. Consider full rewrite or commercial replacement' };
+            }
+            // F - Improve: High business value + Medium tech
+            if (businessScore > 60 && techPerformance >= 40 && techPerformance <= 70) {
+                return { id: 'improve', name: 'F - Improve', icon: '��',
+                         action: 'Good business value. Invest in technical improvements' };
+            }
+            // C - Increase Value: Medium business + High tech
+            if (businessScore >= 30 && businessScore <= 60 && techPerformance > 75) {
+                return { id: 'increase', name: 'C - Increase Value', icon: '📈',
+                         action: 'Tech is solid. Focus on business features to drive adoption' };
+            }
+            // E - Reduce Cost: Low business + High tech
+            if (businessScore < 30 && techPerformance >= 70) {
+                return { id: 'reduce', name: 'E - Reduce Cost', icon: '💰',
+                         action: 'Over-engineered for low value. Minimize maintenance, consider consolidation' };
+            }
+            // A - Sunset: Low business + Low tech
+            if (businessScore < 30 && techPerformance < 40) {
+                return { id: 'sunset', name: 'A - Sunset', icon: '🌅',
+                         action: 'Phase out. Plan migration to alternatives or decommission' };
+            }
+            // B - Rescue: Everything else (moderate value and tech)
+            return { id: 'rescue', name: 'B - Rescue', icon: '⚠️',
+                     action: 'Moderate value and tech. Stabilize first, then improve' };
+        }
+        
+        // Update strategy recommendations section
+        function updateStrategyRecommendations(products) {
+            // Classify all products
+            const strategies = {};
+            products.forEach(p => {
+                const strategy = classifyStrategy(p.business_score, p.tech_performance);
+                if (!strategies[strategy.id]) {
+                    strategies[strategy.id] = {
+                        ...strategy,
+                        products: [],
+                        totalBudget: 0
+                    };
+                }
+                strategies[strategy.id].products.push(p);
+                strategies[strategy.id].totalBudget += p.budget_m;
+            });
+            
+            // Generate HTML for strategy blocks
+            const strategyOrder = ['accelerate', 'replace', 'improve', 'rescue', 'increase', 'reduce', 'sunset'];
+            let html = '<h2>📋 Strategy Recommendations</h2><div class="strategies-grid">';
+            
+            strategyOrder.forEach(strategyId => {
+                const strat = strategies[strategyId];
+                if (!strat || strat.products.length === 0) return;
+                
+                const count = strat.products.length;
+                const budget = strat.totalBudget.toFixed(1);
+                
+                html += `
+                    <div class="strategy-block ${strategyId}">
+                        <div class="strategy-header">
+                            <span class="strategy-icon">${strat.icon}</span>
+                            <span class="strategy-title">${strat.name}</span>
+                            <span class="strategy-meta">${count} products · €${budget}M</span>
+                        </div>
+                        <div class="strategy-action">${strat.action}</div>
+                        <div class="product-list">
+                `;
+                
+                // Show first 6 products, then "+N more" if there are more
+                const displayProducts = strat.products.slice(0, 6);
+                displayProducts.forEach(p => {
+                    html += `<div class="product-tag">${p.name}</div>`;
+                });
+                
+                if (strat.products.length > 6) {
+                    html += `<div class="product-tag">+${strat.products.length - 6} more</div>`;
+                }
+                
+                html += `
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            
+            // Update the strategies section
+            const strategiesSection = document.querySelector('.strategies-section');
+            if (strategiesSection) {
+                strategiesSection.innerHTML = html;
+            }
+        }
+        
+
+
+        // Generate executive summary with strategic analysis
+        function updateExecutiveSummary(products, quarter) {
+            const totalProducts = products.length;
+            const totalBudget = products.reduce((sum, p) => sum + p.budget_m, 0);
+            const avgBusiness = products.reduce((sum, p) => sum + p.business_score, 0) / totalProducts;
+            const avgTech = products.reduce((sum, p) => sum + p.tech_performance, 0) / totalProducts;
+            
+            // Calculate health score (weighted: 40% business, 60% tech)
+            const healthScore = (avgBusiness * 0.4 + avgTech * 0.6);
+            
+            // Classify products
+            const stars = products.filter(p => p.business_score > 75 && p.tech_performance > 80);
+            const zombies = products.filter(p => p.business_score < 30 && p.tech_performance < 40);
+            const rescue = products.filter(p => p.business_score >= 30 && p.business_score <= 60 && p.tech_performance >= 40 && p.tech_performance <= 75);
+            const lowTech = products.filter(p => p.tech_performance < 50);
+            const highValue = products.filter(p => p.business_score > 60);
+            
+            // Lifecycle analysis
+            const ga = products.filter(p => p.lifecycle === 'GENERAL_AVAILABILITY').length;
+            const beta = products.filter(p => p.lifecycle === 'BETA').length;
+            const eol = products.filter(p => p.lifecycle === 'END_OF_LIFE' || p.lifecycle === 'END_OF_SUPPORT').length;
+            
+            // Generate overview narrative
+            const maturityPct = (ga / totalProducts) * 100;
+            const maturityLevel = maturityPct > 50 ? 'mature' : maturityPct > 30 ? 'developing' : 'emerging';
+            const healthStatus = healthScore > 70 ? 'strong' : healthScore > 50 ? 'moderate' : 'weak';
+            
+            const overview = `The BCP domain portfolio in <strong>${quarter}</strong> represents a <strong>${maturityLevel}</strong> ecosystem with <strong>${totalProducts}</strong> products and <strong>€${totalBudget.toFixed(0)}M</strong> in total investment. 
+            With a portfolio health score of <strong>${healthScore.toFixed(0)}%</strong> (${healthStatus}), the domain shows ${stars.length} star products delivering exceptional value, while ${zombies.length} underperformers and ${lowTech.length} technically weak products require immediate attention. 
+            The portfolio demonstrates ${ga} production-ready products (${maturityPct.toFixed(0)}% maturity rate), indicating ${maturityLevel === 'mature' ? 'a stable foundation ready for optimization' : 'room for consolidation and modernization'}. 
+            Strategic focus should prioritize accelerating high-performers, rescuing ${rescue.length} mid-tier products, and sunsetting ${zombies.length} low-value assets to optimize ROI and reduce technical debt by approximately ${((lowTech.length/totalProducts)*100).toFixed(0)}%.`;
+            
+            // Update metrics
+            document.getElementById('metricProducts').textContent = totalProducts;
+            document.getElementById('metricBudget').textContent = '€' + totalBudget.toFixed(0) + 'M';
+            document.getElementById('metricHealth').textContent = healthScore.toFixed(0) + '%';
+            document.getElementById('metricStars').textContent = stars.length;
+            
+            // Update overview
+            document.getElementById('summaryOverview').innerHTML = overview;
+            
+            // Strategic priorities
+            const priorities = [
+                `<strong>Accelerate ${stars.length} star products</strong> - Scale high-performers with 15-20% budget increase`,
+                `<strong>Modernize ${lowTech.length} low-tech products</strong> - Address technical debt systematically`,
+                `<strong>Rescue ${rescue.length} mid-tier products</strong> - Stabilize and improve moderate performers`,
+                `<strong>Sunset ${zombies.length} zombie products</strong> - Wind down low-value assets and reallocate budget`
+            ];
+            
+            document.getElementById('strategicPriorities').innerHTML = priorities.map(p => `<li>${p}</li>`).join('');
+            
+            // Key risks
+            const risks = [
+                `<strong>${eol} products in end-of-life</strong> - Require migration planning and resource allocation`,
+                `<strong>${lowTech.length} products with tech debt</strong> - Risk of failure and maintenance burden`,
+                `<strong>€${(zombies.length * 1.5).toFixed(0)}M in zombie products</strong> - Budget inefficiently allocated`,
+                `<strong>${((100 - maturityPct).toFixed(0))}% non-production products</strong> - Portfolio stability concerns`
+            ];
+            
+            document.getElementById('keyRisks').innerHTML = risks.map(r => `<li>${r}</li>`).join('');
+        }
+        
+        function updateChartWithTimeline(quarterIndex) {
+            const quarter = quarters[quarterIndex];
+            const products = portfolioTimeline[quarter];
+            console.log('📅 Timeline Update:', quarter, 'Products:', products.length);
+            
+            // Update quarter display
+            document.getElementById('quarterDisplay').textContent = quarter;
+            
+            // Calculate stats
+            const totalBudget = products.reduce((sum, p) => sum + p.budget_m, 0);
+            const avgBusiness = products.reduce((sum, p) => sum + p.business_score, 0) / products.length;
+            const avgTech = products.reduce((sum, p) => sum + p.tech_performance, 0) / products.length;
+            
+            // Update stat displays
+            document.getElementById('statProducts').textContent = products.length;
+            document.getElementById('statBudget').textContent = '€' + totalBudget.toFixed(1) + 'M';
+            document.getElementById('statBusiness').textContent = avgBusiness.toFixed(1);
+            document.getElementById('statTech').textContent = avgTech.toFixed(1);
+            
+            // Update chart - CRITICAL: Chart has one dataset per product (50 datasets)
+            console.log('🎨 Updating chart - mainChart exists:', !!mainChart);
+            if (mainChart && mainChart.data && mainChart.data.datasets) {
+                console.log('📊 Chart has', mainChart.data.datasets.length, 'datasets');
+                
+                // Match products to datasets by name (dataset.label = product name)
+                products.forEach((product) => {
+                    // Find the dataset for this product
+                    const datasetIndex = mainChart.data.datasets.findIndex(ds => ds.label === product.name);
+                    
+                    if (datasetIndex !== -1 && mainChart.data.datasets[datasetIndex].data[0]) {
+                        // Update the single data point in this product's dataset
+                        mainChart.data.datasets[datasetIndex].data[0].x = product.tech_performance;
+                        mainChart.data.datasets[datasetIndex].data[0].y = product.business_score;
+                        mainChart.data.datasets[datasetIndex].data[0].r = Math.sqrt(product.budget_m) * 4;
+                        
+                        // Update color based on lifecycle
+                        const color = lifecycleColors[product.lifecycle] || '#999';
+                        mainChart.data.datasets[datasetIndex].backgroundColor = color;
+                        mainChart.data.datasets[datasetIndex].borderColor = 'rgba(255, 255, 255, 0.8)';
+                    }
+                });
+                
+                console.log('✅ Chart data updated, calling update()');
+                mainChart.update('none'); // Update without animation for smooth slider
+            } else {
+                console.error('❌ Chart not available for update');
+            }
+            
+            // Update strategy recommendations, lifecycle charts, and executive summary
+            updateStrategyRecommendations(products);
+            updateLifecycleCharts(products);
+            updateExecutiveSummary(products, quarter);
+            
+        }
+
+        
+        // Initialize slider
+        window.addEventListener('DOMContentLoaded', function() {
+            const slider = document.getElementById('quarterSlider');
+            if (slider) {
+                slider.addEventListener('input', function(e) {
+                    updateChartWithTimeline(parseInt(e.target.value));
+                });
+            // Test button handler
+            const testButton = document.getElementById('testButton');
+            if (testButton) {
+                testButton.addEventListener('click', function() {
+                    console.log('🧪 TEST: Manual update triggered');
+                    const currentIndex = parseInt(document.getElementById('quarterSlider').value);
+                    updateChartWithTimeline(currentIndex);
+                });
+            }
+
+            }
+            
+            // Initialize strategies and lifecycle charts after main chart is created
+            setTimeout(function() {
+                if (mainChart && mainChart.data && mainChart.data.datasets) {
+                    console.log('✅ Chart ready:', mainChart.data.datasets.length, 'datasets');
+                    
+                    // Initialize lifecycle charts
+                    initLifecycleCharts();
+                    
+                    // Initialize strategy recommendations, lifecycle, and executive summary with Q1-2026 data
+                    updateStrategyRecommendations(portfolioTimeline["Q1-2026"]);
+                    updateLifecycleCharts(portfolioTimeline["Q1-2026"]);
+                    updateExecutiveSummary(portfolioTimeline["Q1-2026"], "Q1-2026");
+                    
+                } else {
+                    console.error('❌ Chart not ready!');
+                }
+            }, 500);
+            
+            // Add scroll effect for sticky timeline with compact mode
+            let isCompact = false;
+            window.addEventListener('scroll', function() {
+                const timeline = document.querySelector('.timeline-control');
+                if (timeline) {
+                    const scrollY = window.scrollY;
+                    
+                    // Toggle compact mode at 100px scroll
+                    if (scrollY > 100 && !isCompact) {
+                        timeline.classList.add('compact');
+                        timeline.style.boxShadow = '0 4px 20px rgba(102, 126, 234, 0.5)';
+                        isCompact = true;
+                    } else if (scrollY <= 100 && isCompact) {
+                        timeline.classList.remove('compact');
+                        timeline.style.boxShadow = '0 8px 30px rgba(102, 126, 234, 0.4)';
+                        isCompact = false;
+                    }
+                    
+                    // Enhanced shadow when scrolled
+                    if (scrollY > 100) {
+                        timeline.style.boxShadow = '0 4px 20px rgba(102, 126, 234, 0.5)';
+                    }
+                }
+            });
+        });
+
+    </script>
+</body>
+</html>

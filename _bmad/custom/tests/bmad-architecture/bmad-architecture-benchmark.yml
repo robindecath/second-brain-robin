@@ -1,0 +1,223 @@
+# Benchmark: bmad-architecture workflow (System Architecture Design)
+#
+# Validates the architecture workflow's Decathlon customization:
+# - 3-layer TOML merge (base → team → user)
+# - Activation steps: tech-radar, asset-kg, slo-generator
+# - Persistent facts: SIG compliance, FedID mandatory, Datadog observability
+# - On-complete: SIG compliance check + skill discovery proposal
+# - Knowledge routing: Conditional asset KG lookup, mandatory SIG check
+# - Repository-topology review and confirmed gh CLI action guidance
+#
+# Lives alongside the override: bmad-architecture.toml
+# Stubs: tests/bmad-architecture/stubs/*.skill.yml
+#
+# Run offline (stubs):
+#   benchmark run --config tests/bmad-architecture/bmad-architecture-benchmark.yml
+
+project: bmad-architecture
+
+model: copilot/claude-haiku-4.5
+
+
+# ── Pre-activate hook ─────────────────────────────────────────
+pre_activate:
+  command: >-
+    uv run ${PROJECT_ROOT:-.}/_bmad/scripts/resolve_customization.py
+    --skill ${ARCH_WORKFLOW_SKILL_DIR:-./.agents/skills/bmad-architecture}
+    --key workflow
+  var: resolved_agent
+
+system_prompt: >-
+  {resolved_agent}
+
+  You are an AI agent helping to design system architecture for a Decathlon product.
+  You have access to specialized skills for architecture validation and planning.
+  When a task matches a skill description, use the read_skill tool to load it.
+
+skills:
+  - name: bmad-architecture-workflow
+    path: ${ARCH_WORKFLOW_SKILL_DIR:-./.agents/skills/bmad-architecture}/SKILL.md
+
+sub_skills:
+  - name: decathlon-tech-radar
+    path: ./tests/bmad-architecture/stubs/decathlon-tech-radar.skill.yml
+  - name: knowledge-graph-query
+    path: ./tests/bmad-architecture/stubs/knowledge-graph-query.skill.yml
+  - name: slo-generator
+    path: ./tests/bmad-architecture/stubs/slo-generator.skill.yml
+  - name: decathlon-tech-compliance
+    path: ./tests/bmad-architecture/stubs/decathlon-tech-compliance.skill.yml
+
+prompts:
+  - id: activation-tech-radar
+    text: >-
+      Load the architecture workflow skill. What is the first activation step
+      when creating a system architecture?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains_ignore_case
+        value: "tech-radar"
+
+  - id: activation-asset-kg
+    text: >-
+      Load the architecture workflow skill. When the architecture involves
+      named Decathlon products or services, what must happen?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "knowledge-graph-query"
+
+  - id: activation-slo-generator
+    text: >-
+      Load the architecture workflow skill. What SLO-related check must be
+      performed during the architecture phase?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "slo-generator"
+
+  - id: persistent-sig-compliance
+    text: >-
+      Load the architecture workflow skill. What is required for all Decathlon
+      architectures across all 6 domains?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "SIG"
+
+  - id: persistent-fedid-mandatory
+    text: >-
+      Load the architecture workflow skill. For authentication and API security
+      in Decathlon applications, what is the sole identity provider?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "FedID"
+
+  - id: persistent-observability-mandatory
+    text: >-
+      Load the architecture workflow skill. What observability platform must
+      be included in all Decathlon architectures?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "Datadog"
+
+  - id: threat-model-required-for-design-change
+    text: >-
+      Load the bmad-architecture skill. For a new system or a change to
+      data flow, identity, access, external integrations, or trust boundaries,
+      which skill builds the STRIDE threat model?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "cybersecurity-threat-modeling"
+
+  - id: threat-model-artifact-location
+    text: >-
+      Load the bmad-architecture skill. Where must the cybersecurity threat
+      model, security requirements, and verification checklist be written in
+      this BMAD installation, and which upstream default directory must not be
+      used?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "_specs/"
+      - type: response_contains_ignore_case
+        value: "docs/security"
+
+  - id: no-threat-model-on-routine-ops-task
+    text: >-
+      Load the bmad-architecture skill. I need to add a Datadog
+      error-rate monitor for an existing service as a routine operational
+      task; no feature or architecture change is planned. Does the
+      architecture workflow require invoking cybersecurity-threat-modeling?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains_ignore_case
+        value: "not required"
+
+  - id: threat-modeling-gate-single-pass
+    text: >-
+      Load the bmad-architecture skill. If the user already responded to
+      the threat-modeling residual-risk sign-off earlier in this session,
+      should the workflow re-open the gate or ask again during final validation?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains_ignore_case
+        value: "do not re-open"
+
+  - id: on-complete-compliance-check
+    text: >-
+      Load the architecture workflow skill. What mandatory action must occur
+      when the architecture is completed?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "decathlon-tech-compliance"
+
+  - id: on-complete-skill-discovery
+    text: >-
+      Load the architecture workflow skill. After completing the architecture,
+      what should happen with relevant skills for the project stack?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "decathlon-find-skills"
+
+  - id: repository-topology-review
+    text: >-
+      Load the architecture workflow skill. A new product has independent
+      specifications, a frontend, and a backend with different frameworks and
+      lifecycles. What topology should the architecture recommend, and how
+      should justified alternatives be handled?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "-specs"
+      - type: response_contains
+        value: "-front"
+      - type: response_contains
+        value: "-back"
+      - type: response_contains_ignore_case
+        value: "non-blocking"
+
+  - id: accepted-topology-gh-actions
+    text: >-
+      Load the architecture workflow skill. The user has accepted the
+      repository recommendation. What installed tool can create or update
+      those repositories, and what approval is required?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "gh"
+      - type: response_contains_ignore_case
+        value: "confirm"

@@ -1,0 +1,228 @@
+# Benchmark: Conditional Skill Invocation
+#
+# Validates that workflow external_sources are conditionally invoked,
+# not always invoked regardless of context.
+#
+# The bmad-prd workflow specifies:
+#   external_sources = [
+#     "When PRD references User Journeys... consult delivery-metrics",
+#     "When PRD mentions product by name... consult asset-knowledge-graph",
+#     "When scoping revenue features... consult business-data"
+#   ]
+#
+# This benchmark tests that:
+# - delivery-metrics is invoked WHEN User Journey mentioned (conditional)
+# - delivery-metrics is NOT invoked when feature is unrelated (proper gating)
+# - asset-KG is invoked WHEN product name mentioned
+# - Skills are truly conditional, not always called
+#
+# Run this benchmark:
+#   benchmark run --config tests/bmad-prd-conditional/conditional-sources.yml
+#
+# Expected results:
+#   ✓ prompt-1: WITH UJ → mentions delivery-metrics (conditional triggered)
+#   ✓ prompt-2: WITHOUT UJ → does NOT mention delivery-metrics (conditional gated)
+#   ✓ prompt-3: WITH product → mentions asset-knowledge-graph
+#   ✓ prompt-4: WITHOUT product → does NOT mention asset-knowledge-graph
+#   ✓ Proves skills are invoked conditionally, not universally
+
+project: bmad-prd-conditional
+
+model: copilot/claude-haiku-4.5
+
+# ── Pre-activate hook ─────────────────────────────────────────
+pre_activate:
+  command: >-
+    uv run ${PROJECT_ROOT:-.}/_bmad/scripts/resolve_customization.py
+    --skill ${PRD_WORKFLOW_SKILL_DIR:-./.agents/skills/bmad-prd}
+    --key workflow
+  var: resolved_agent
+
+system_prompt: >-
+  {resolved_agent}
+
+  You are helping to create a Product Requirements Document (PRD)
+  for a Decathlon digital product. You have access to specialized skills
+  that provide guidance for different types of PRD work.
+  
+  Use the read_skill tool to load skills when:
+  - The PRD references existing Decathlon products (load asset-knowledge-graph)
+  - The PRD impacts User Journeys (load delivery-metrics)
+  - The PRD involves revenue or business impact (load business-data)
+  
+  Load skills ONLY when these conditions are met, not reflexively.
+
+skills:
+  - name: bmad-prd-workflow
+    path: ${PRD_WORKFLOW_SKILL_DIR:-./.agents/skills/bmad-prd}/SKILL.md
+
+sub_skills:
+  - name: knowledge-graph-query
+    path: ./tests/bmad-prd-conditional/stubs/knowledge-graph-query.skill.yml
+  - name: delivery-metrics
+    path: ./tests/bmad-prd-conditional/stubs/delivery-metrics.skill.yml
+  - name: business-data
+    path: ./tests/bmad-prd-conditional/stubs/business-data.skill.yml
+
+prompts:
+  # ── Conditional 1: Delivery Metrics ─────────────────────────────────────
+  # Test 1A: WITH User Journey mention → should invoke delivery-metrics
+  
+  - id: prd-with-user-journey-slo
+    text: >-
+      Load the bmad-prd workflow skill.
+      
+      We're writing a PRD for a new feature that impacts a critical Decathlon User Journey
+      (the "Purchase" journey). We need to specify SLO requirements for this feature.
+      
+      What knowledge sources should we consult to ground SLO requirements?
+      Which skill helps us understand User Journey performance baselines?
+    
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      # When UJ mentioned, should reference delivery-metrics
+      - type: response_contains
+        value: "delivery-metrics"
+      - type: response_contains
+        value: "SLO"
+
+  # Test 1B: WITHOUT User Journey mention → should NOT invoke delivery-metrics
+  
+  - id: prd-without-user-journey-backend-feature
+    text: >-
+      Load the bmad-prd workflow skill.
+      
+      We're writing a PRD for a new internal authentication backend service.
+      It has no direct impact on customer-facing User Journeys.
+      No SLO requirements beyond standard internal service levels.
+      
+      What knowledge sources should we consult for this PRD?
+      Is User Journey performance baseline data relevant here?
+    
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      # When UJ NOT mentioned, should NOT recommend delivery-metrics for this work
+      # The response might mention delivery-metrics in general (explaining conditional logic)
+      # but should NOT say to use it for THIS backend service PRD
+
+  # ── Conditional 2: Asset Knowledge Graph ────────────────────────────────
+  # Test 2A: WITH product name mention → should invoke asset-knowledge-graph
+  
+  - id: prd-with-existing-product-name
+    text: >-
+      Load the bmad-prd workflow skill.
+      
+      Our PRD describes a new integration with the "orders-front" product.
+      We need to document the API contract and data flow between systems.
+      
+      What should we do before finalizing the integration requirements?
+      Which skill helps us understand the existing "orders-front" product?
+    
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      # When existing product mentioned by name, should reference asset-KG
+      - type: response_contains
+        value: "asset-knowledge-graph"
+
+  # Test 2B: WITHOUT product name → should NOT invoke asset-knowledge-graph
+  
+  - id: prd-greenfield-no-existing-product
+    text: >-
+      Load the bmad-prd workflow skill.
+      
+      We're building a completely new Decathlon platform (not integrating with existing products).
+      No dependencies on existing systems mentioned.
+      
+      Do we need to consult the asset-knowledge-graph for this greenfield PRD?
+      Why or why not?
+    
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      # For greenfield (no existing product), asset-KG is not immediately relevant
+      # Response should explain why we DON'T need it (no existing assets to look up)
+
+  # ── Conditional 3: Online Business Data ─────────────────────────────────
+  # Test 3A: WITH revenue mention → should invoke business-data
+  
+  - id: prd-revenue-impact-gmv
+    text: >-
+      Load the bmad-prd workflow skill.
+      
+      Our PRD describes a new feature that affects GMV (gross merchandise value)
+      and has direct revenue implications. We need to scope business impact.
+      
+      What knowledge sources should we consult to ground business value claims?
+    
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      # When revenue/GMV mentioned, should reference business-data
+      - type: response_contains
+        value: "business-data"
+
+  # Test 3B: WITHOUT revenue mention → should NOT invoke business-data
+  
+  - id: prd-internal-tool-no-revenue
+    text: >-
+      Load the bmad-prd workflow skill.
+      
+      We're writing a PRD for an internal monitoring dashboard tool.
+      No customer-facing features, no GMV impact, purely operational value.
+      
+      Do we need business data sources (GMV, revenue baselines) for this PRD?
+      Why or why not?
+    
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      # For internal tools with no revenue impact, business-data is not relevant
+      # Response should explain why
+
+  # ── Integration Test: Multiple Conditions ────────────────────────────────
+  # Real-world scenario with multiple triggers
+  
+  - id: prd-complex-multiple-conditions
+    text: >-
+      Load the bmad-prd workflow skill.
+      
+      PRD for a new checkout feature affecting:
+      - The "Purchase" User Journey (performance SLOs needed)
+      - Integration with "order-management" product
+      - Direct revenue impact (10M GMV baseline)
+      
+      What knowledge sources should we consult?
+      List each one and explain why it's needed.
+    
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      # Should mention all three skills
+      - type: response_contains
+        value: "delivery-metrics"
+      - type: response_contains
+        value: "asset-knowledge-graph"
+      - type: response_contains
+        value: "business-data"
+
+summary: |
+  This benchmark validates conditional skill invocation by testing that:
+  
+  ✓ Delivery-metrics is ONLY recommended for PRDs affecting User Journeys
+  ✓ Asset-KG is ONLY recommended when existing products are mentioned
+  ✓ Business-data is ONLY recommended for revenue-impacting features
+  
+  It proves that customization's external_sources are truly conditional,
+  not universal. Skills are invoked based on context, not reflexively.
+  
+  This addresses a critical test gap: "Are skills ONLY invoked when needed?"

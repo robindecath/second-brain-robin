@@ -1,0 +1,12 @@
+name: better-auth-fedid-configuration-nextjs
+description: "Configure authentication in a Next.js project using Decathlon FedID as the identity provider via better-auth."
+instructions: |
+  Set up Decathlon FedID authentication in a Next.js project using better-auth.
+  Steps:
+  1. Install better-auth and the Decathlon FedID provider
+  2. Configure the FedID OAuth2 client with the correct scopes and redirect URIs
+  3. Add the auth API route
+  4. Set up session management and middleware
+  5. Protect routes and expose user identity to client components
+
+  Provide complete, copy-paste-ready code for each step.

@@ -1,0 +1,8 @@
+name: knowledge-graph-query
+description: Resolves an asset in AppReferential to get team ownership, deployment namespace, cluster, business tier, and upstream dependencies.
+instructions: |
+  Query AppReferential knowledge graph for asset information. Use
+  `asset(name: '...')` for exact name lookup or `assets(filter: {...})`
+  for filtered queries. Extract from results: metadata.observability,
+  metadata.deployment.namespace, orgRefs.team, orgRefs.owner, tiering,
+  and relationships for dependency mapping.

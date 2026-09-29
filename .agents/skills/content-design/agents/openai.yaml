@@ -1,0 +1,6 @@
+interface:
+  display_name: "Content Design"
+  short_description: "Create and review clear, accessible UX content for Decathlon Digital."
+  default_prompt: "Use $content-design to review or create customer-facing UX content."
+policy:
+  allow_implicit_invocation: true

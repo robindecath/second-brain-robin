@@ -1,0 +1,4 @@
+name: knowledge-graph-query
+description: >-
+  Asset Knowledge Graph skill for direct asset lookup.
+  Tests knowledge graph invocation timing.

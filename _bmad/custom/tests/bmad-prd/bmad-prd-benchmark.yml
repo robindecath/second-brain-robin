@@ -1,0 +1,191 @@
+# Benchmark: bmad-prd workflow (Product Requirements Document)
+#
+# Validates the PRD workflow's Decathlon customization:
+# - 3-layer TOML merge (base → team → user)
+# - Activation steps: tech-radar invocation for tech classification
+# - Persistent facts: AppReferential registration, SLO requirements
+# - External sources routing: delivery-metrics for UJ baselines
+# - Knowledge source activation on-demand (not globally)
+# - Conditional repository-topology recommendations for new projects
+#
+# Lives alongside the override: bmad-prd.toml
+# Stubs: tests/bmad-prd/stubs/*.skill.yml
+#
+# Run offline (stubs):
+#   benchmark run --config tests/bmad-prd/bmad-prd-benchmark.yml
+#
+# Run against a real bmad project (set env vars):
+#   export PROJECT_ROOT=/path/to/bmadtest4
+#   export TECH_RADAR_PATH=/path/to/bmadtest4/.agents/skills/decathlon-tech-radar/SKILL.md
+#   export ASSET_KG_PATH=/path/to/bmadtest4/.agents/skills/knowledge-graph-query/SKILL.md
+#   export DELIVERY_METRICS_PATH=/path/to/bmadtest4/.agents/skills/delivery-metrics/SKILL.md
+#
+# Run a single prompt:
+#   benchmark run --config tests/bmad-prd/bmad-prd-benchmark.yml --prompt-id activation
+
+project: bmad-prd
+
+model: copilot/claude-haiku-4.5
+
+# ── Pre-activate hook ─────────────────────────────────────────
+pre_activate:
+  command: >-
+    uv run ${PROJECT_ROOT:-.}/_bmad/scripts/resolve_customization.py
+    --skill ${PRD_WORKFLOW_SKILL_DIR:-./.agents/skills/bmad-prd}
+    --key workflow
+  var: resolved_agent
+
+system_prompt: >-
+  {resolved_agent}
+
+  You are an AI agent helping to create a Product Requirements Document (PRD)
+  for a new Decathlon digital product. You have access to specialized skills.
+  When a task matches a skill description, use the read_skill tool to load it.
+
+skills:
+  - name: bmad-prd-workflow
+    path: ${PRD_WORKFLOW_SKILL_DIR:-./.agents/skills/bmad-prd}/SKILL.md
+
+sub_skills:
+  - name: decathlon-tech-radar
+    path: ${TECH_RADAR_PATH:-./tests/bmad-prd/stubs/decathlon-tech-radar.skill.yml}
+  - name: knowledge-graph-query
+    path: ${ASSET_KG_PATH:-./tests/bmad-prd/stubs/knowledge-graph-query.skill.yml}
+  - name: delivery-metrics
+    path: ${DELIVERY_METRICS_PATH:-./tests/bmad-prd/stubs/delivery-metrics.skill.yml}
+  - name: ux-research
+    path: ${UX_RESEARCH_PATH:-./tests/bmad-prd/stubs/ux-research.skill.yml}
+
+prompts:
+  # ── Workflow activation: Tech Radar ───────────────────────────
+  - id: activation-tech-radar
+    text: >-
+      Load the bmad-prd workflow skill. What is the first activation step
+      that must run when creating a new PRD?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains_ignore_case
+        value: "tech-radar"
+
+  # ── Persistent fact: AppReferential registration ──────────────
+  - id: persistent-fact-app-referential
+    text: >-
+      Load the bmad-prd workflow skill. For a new product PRD, what must
+      happen after launch regarding AppReferential?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains_ignore_case
+        value: "AppReferential"
+
+  # ── Persistent fact: SLO baseline requirements ────────────────
+  - id: persistent-fact-slo-baseline
+    text: >-
+      Load the bmad-prd workflow skill. When a PRD impacts User Journeys,
+      what requirements must be included?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains_ignore_case
+        value: "SLO"
+
+  # ── External source: Delivery metrics routing ─────────────────
+  - id: external-source-delivery-metrics
+    text: >-
+      Load the bmad-prd workflow skill. When the PRD references User Journeys,
+      which external knowledge source should be consulted?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "delivery-metrics"
+
+  # ── External source: Asset knowledge graph routing ────────────
+  - id: external-source-asset-kg
+    text: >-
+      Load the bmad-prd workflow skill. When the PRD mentions an existing
+      Decathlon product by name, what must you do?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "knowledge-graph-query"
+
+  # ── Conditional knowledge routing (not always) ────────────────
+  - id: external-source-conditional
+    text: >-
+      Load the bmad-prd workflow skill. Are the external knowledge sources
+      always invoked, or consulted on-demand?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains_ignore_case
+        value: "on-demand"
+
+  # ── Broad-project repository recommendation ─────────────────
+  - id: broad-project-repository-recommendation
+    text: >-
+      Load the bmad-prd workflow skill. A new product needs independently
+      shared specifications, a web frontend, and a backend API with different
+      frameworks and lifecycles. What repository recommendation belongs in
+      the PRD?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "-specs"
+      - type: response_contains
+        value: "-front"
+      - type: response_contains
+        value: "-back"
+      - type: response_contains_ignore_case
+        value: "recommend"
+
+  # ── Narrow projects should not be split artificially ────────
+  - id: narrow-backend-repository-recommendation
+    text: >-
+      Load the bmad-prd workflow skill. A new project is only one Spring Boot
+      backend service with one lifecycle. Should the PRD recommend several
+      repositories?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains_ignore_case
+        value: "single"
+      - type: response_contains_ignore_case
+        value: "repository"
+
+  # ── External source: ux-research routing ──────────────────────
+  - id: external-source-ux-research
+    text: >-
+      Load the bmad-prd workflow skill. The PRD needs personas and a journey
+      map grounded in user evidence. Which skill must be invoked?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "ux-research"
+
+  # ── Persistent fact: evidence trail on user claims ────────────
+  - id: ux-research-evidence-trail
+    text: >-
+      Load the bmad-prd workflow skill. What must accompany every user-need
+      claim included in the PRD?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains_ignore_case
+        value: "citation"
+      - type: response_contains_ignore_case
+        value: "confidence"

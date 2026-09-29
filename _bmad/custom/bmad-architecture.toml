@@ -1,0 +1,64 @@
+# Team overrides for bmad-architecture — the current System Architecture Design skill.
+# Merged on top of .agents/skills/bmad-architecture/customize.toml
+# Scalar values override defaults; arrays append to defaults.
+#
+# bmad-create-architecture is deprecated and forwards here (see its SKILL.md notice).
+# This file is the modern replacement for bmad-create-architecture.toml and additionally
+# uses the richer customization surface bmad-create-architecture cannot access:
+# `finalize_reviewers`, `doc_standards`, `external_sources`, `external_handoffs`.
+#
+# Gap fixed here vs the legacy file: tech-radar / SIG compliance / SLO checks used to be
+# expressed only as passive `persistent_facts` — instructions the LLM is told to "keep in
+# mind", with nothing forcing it to actually surface findings and get a user response
+# (unlike the PRD/dev-story workflows, which visibly gate on tech-compliance). The
+# `finalize_reviewers` entry below fixes that: it runs as an explicit, user-visible
+# checkpoint at the Finalize/Validate gate, and per bmad-architecture's own reviewer-gate
+# semantics, once the gate runs, every `finalize_reviewers` entry is part of the mandatory
+# floor — never silently skipped or satisfied by inference alone.
+
+[workflow]
+
+activation_steps_prepend = [
+  "Invoke `decathlon-tech-radar` to load the current Decathlon technology classification rules (ADOPT / TRIAL / ASSESS / HOLD). Every technology choice in the architecture must be justified against the radar — HOLD technologies are hard-blocked.",
+]
+
+activation_steps_append = [
+  "If the architecture involves any named Decathlon product, service, API, or component, invoke `knowledge-graph-query` to load authoritative context: current tech stack, deployment namespace, team ownership (orgRefs), existing SLOs, and documentation links. Never make architectural assumptions about a Decathlon asset without KG verification.",
+  "Invoke `slo-generator` to check whether SLI/SLO definitions already exist for the product being architected. If none exist, flag the absence of SLO definitions as an architectural gap to address during the solutioning phase.",
+  "If the architecture requires calling or exposing an internal capability that isn't tied to a specific named API (e.g. 'fetch product data', 'submit an order'), invoke `decathlon-api-discovery` to check whether a Decathlon API/endpoint already covers it before designing a new integration.",
+  "For a new system, or for any change to data flow, identity, access, external integrations, or trust boundaries, invoke `cybersecurity-threat-modeling` to build or update the threat model during Step 03 — the design phase is the primary threat-modeling entry point, before any code exists. Do not invoke it for routine operational or non-design work with no new data flow, identity, or trust-boundary change, such as monitoring/alerting configuration, logging, CI/CD pipeline tweaks, dependency bumps, pure refactors, or documentation. For this BMAD installation, all threat-modeling artifacts MUST be written to `_specs/`: `threat-model.md`, `security-requirements.md`, and `security-verification-checklist.md`. Do not use the upstream skill's `docs/security/` default or any other output directory unless the user explicitly requests a different location. The derived security requirements feed Step 04 (implementation stories) and Step 05 (test evidence).",
+]
+
+persistent_facts = [
+  "Every Decathlon architecture must comply with the SIG Maturity Matrix across all 6 domains: architecture, development, security, infrastructure, data, and testing. A formal compliance check via `decathlon-tech-compliance` is mandatory at architecture completion.",
+  "Authentication and API security for Decathlon applications must use FedID as the sole identity provider. Spring Boot resource servers: `spring-boot-fedid-resource-server`. Spring Boot service-to-service: `spring-boot-fedid-rest-client`. Next.js frontends: `better-auth-fedid-configuration-nextjs`. Astro frontends: `better-auth-fedid-configuration-astro`.",
+  "Web frontend architectures must enforce Decathlon Vitamin Play design system (web-ui-development) and WCAG 2.2 AA / RGAA accessibility compliance (web-accessibility-evaluation) as non-negotiable quality gates before sign-off. CLI, API, and MCP-server architectures have no web surface — do not require Vitamin Play or WCAG for them; instead confirm the equivalent non-web quality gates (structured error contracts, help/usage text clarity, versioned request/response schemas) are covered.",
+  "All architectures must include an observability section covering Datadog APM, SLO definitions (via slo-generator), and alerting strategy. Observability is a delivery requirement, not a post-launch concern.",
+  "Threat modeling is mandatory for new systems and for changes to data flow, identity, access, external integrations, or trust boundaries. It is not required for routine operational or non-design work with no new data flow, identity, or trust-boundary change. Use `cybersecurity-threat-modeling` with STRIDE per trust boundary (Risk = Likelihood x Impact; P0=16-25, P1=9-15, P2=4-8, P3=1-3). Every risk needs an owner, due date, and verification method. Every mitigation becomes delivery work (ADR, story/task, or test). The threat model in `_specs/` is a living artifact — update it on every major design change.",
+  "For a new project whose specifications, frontend, or backend form at least two technical surfaces with different frameworks or lifecycles, review and document a repository-split recommendation. Prefer `<product>-specs` when specifications need an independent lifecycle, `<product>-front` for the complete frontend, and `<product>-back` for the complete backend. SIG Delivery recommends aiming for a single-framework monorepo per code surface: full frontend or full backend, not both in one repository. This guidance is non-blocking: avoid artificial splits for narrow projects and document justified alternative boundaries or naming.",
+  "After the user accepts the repository-topology recommendation, explain that the already-installed `gh` CLI can create repositories and update their settings or metadata. Offer to perform the requested actions, but require explicit confirmation before any repository mutation.",
+]
+
+# Mandatory post-architecture action: formal SIG maturity compliance check
+# producing tech_debt.md for brownfield projects, then skill discovery.
+on_complete = """
+Invoke `decathlon-tech-compliance` to run a formal SIG Maturity Matrix compliance check across all 6 domains (architecture, development, security, infrastructure, data, testing). For brownfield projects, generate a tech_debt.md cataloguing all gaps. Surface findings to the user before the architecture is considered signed off.
+
+Then invoke `decathlon-find-skills` to analyse the completed architecture document, extract the project's technology stack signals, and propose relevant skills from the Decathlon skill catalog. Present the ranked candidate list grouped by category. On user confirmation, update skills.config.json and install the selected skills so developers working on this project have the right context from day one.
+"""
+
+# Active, user-visible tech-validation gate. Runs alongside the skill's built-in
+# good-spine checklist and lint_spine.py floor whenever the reviewer gate runs (per
+# bmad-architecture's stakes-gating — but once it runs, every entry here is mandatory,
+# never cherry-picked). This is what makes the tech-radar/SIG/FedID checks a real
+# conversational checkpoint instead of a fact the agent can silently "keep in mind".
+finalize_reviewers = [
+  "Tech Radar Validation: list every technology, framework, or library choice committed in the spine. For each, state its Decathlon Tech Radar classification (ADOPT / TRIAL / ASSESS / HOLD). Treat any HOLD choice as a blocking finding with a required ADOPT/TRIAL replacement proposal. Treat any TRIAL or ASSESS choice as a finding that must be surfaced to the user for explicit confirmation (accept the risk, or replace it) — do not let it pass silently. Also verify: FedID is the identity provider for any auth/API-security decision; an observability section (Datadog APM + SLOs) exists; and — only if the architecture has a web frontend — Vitamin Play and WCAG 2.2 AA/RGAA are addressed. For CLI/API/MCP-only architectures, verify the equivalent non-web quality bar (error contract, help/usage clarity, schema versioning) is addressed instead, and do not flag the absence of Vitamin Play/WCAG as a gap.",
+  "Threat Model Validation: for a new system, or any change to data flow, identity, access, external integrations, or trust boundaries, confirm a `cybersecurity-threat-modeling` threat model exists in `_specs/` (`threat-model.md`, `security-requirements.md`, `security-verification-checklist.md`). Do not require it for routine operational or non-design work with no new data flow, identity, or trust-boundary change. Verify STRIDE was applied per trust boundary, every risk has a Likelihood x Impact score with an assigned priority (P0-P3), and every open P0 is either resolved or has a time-bound, named risk acceptance. Treat a missing threat model for a qualifying change, or an unaccepted open P0, as a blocking finding. Surface the residual-risk list to the user for explicit sign-off once per architecture validation; if the user has already responded, do not re-open the threat-modeling gate or ask again in the same session.",
+]
+
+external_sources = [
+  "When the user mentions an external tool or platform — or asks about available MCPs — invoke `decathlon-find-mcp-server`. If the skill is not installed, tell the user to run: `npx skills add dktunited/ai-augmented-sdlc --skill decathlon-find-mcp-server`",
+  "When the user asks about AI Augmented Development at Decathlon — GitHub Copilot usage, billing or quota, the AI Augmented SDLC platform, coding standards, agent skills, MCP servers, trainings, talks or monthly community calls — consult the official documentation via `decathlon-ai-augmented-development-docs`, which reads the versioned `llms-full.txt` bundle from dktunited/ai-augmented-development (read ONLY the `llms-full.txt` files — never the link-only `llms.txt`/`llms-pages.txt` indexes, which point back to the login-gated site). If the skill is not installed, tell the user to run: `npx skills add dktunited/ai-augmented-sdlc --skill decathlon-ai-augmented-development-docs`",
+  "When the architecture work concerns an existing (brownfield) Decathlon product and the user asks whether it is ready to scale / be promoted to more regions or countries, or requests a tech-debt / scalability / readiness assessment of it, invoke `product-scalability-assessment` — it chains knowledge-graph-query, decathlon-tech-radar, endoflife.date, delivery-metrics, decathlon-api-discovery and decathlon-tech-compliance into an evidence-based Now/Next/Later report; never fabricate a figure. If the skill is not installed, tell the user to run: `npx skills add dktunited/ai-augmented-sdlc --skill product-scalability-assessment`",
+]

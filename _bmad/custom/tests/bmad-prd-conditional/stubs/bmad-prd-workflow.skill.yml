@@ -1,0 +1,4 @@
+name: bmad-prd-workflow
+description: >-
+  PRD workflow skill stub for conditional routing tests.
+  Tests conditional external_sources invocation.

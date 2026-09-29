@@ -37,6 +37,16 @@ les répétitions, et la revue hebdo cherche la dernière `revue` pour savoir o�
 
 ## Entrées
 
+### 2026-09-29 — décision — Déclaration des outils Google
+
+Ajout de Gmail, Google Chat et Google Docs à `config.md`. Leur accès est en lecture seule lorsqu'un
+connecteur est disponible ; toute écriture nécessite un accord explicite.
+
+### 2026-09-29 — friction — Accès aux outils Google absent
+
+La vérification des emails a été bloquée car aucun connecteur Google ni outil de messagerie n'est
+disponible dans cette session ; `config.md` ne mentionne pas encore les outils Google.
+
 ### 2026-09-29 — friction — Clarification des droits d’écriture Jira
 
 La portée des droits d’écriture Jira/Confluence a nécessité une question de clarification après
@@ -48,3 +58,47 @@ explicite et Confluence en lecture seule.
 Renseignement de `config.md` avec les préférences d'identité, de rôle, de casquettes, de langue,
 de ton, de nommage, de plafonds, de périmètre sensible et les droits déclarés pour les outils
 externes.
+
+### 2026-09-29 — décision — Création de la casquette de suivi des externes
+
+Création de la branche `2_Casquettes/suivi-des-externes-equipe/` et qualification de la capture
+sur Abdessamade dans cette casquette. Le routage est ajouté au hub parent et aux instructions.
+
+### 2026-09-29 — décision — Création de la casquette Tech lead Datacost
+
+Création de la branche `2_Casquettes/tech-lead-datacost/` et consignation du suivi mensuel avec
+Amine MIMOUNI. Le routage est ajouté au hub parent et aux instructions.
+
+### 2026-09-29 — décision — Reclassement du suivi mensuel avec Amine
+
+Après clarification, le compte rendu du suivi mensuel avec Amine MIMOUNI est rattaché à la casquette
+`Suivi des externes de l'équipe`. Les fichiers et le routage provisoires de la branche Tech lead
+Datacost créés lors du premier classement sont retirés.
+
+### 2026-09-29 — friction — Ouverture inattendue de Chrome pour Google Chat
+
+Pour identifier la conversation directe nécessaire à l'envoi via Google Workspace, l'agent a ouvert
+Google Chat dans une fenêtre Chrome sans prévenir. L'envoi a été réalisé via `gws chat +send`, mais
+l'ouverture du navigateur a surpris l'utilisateur. L'utilisateur a précisé qu'il fallait rester dans
+la skill Google Workspace, sans ouvrir Chrome ; si l'identifiant nécessaire n'est pas accessible
+dans ce flux, demander cet identifiant plutôt que passer par l'interface web.
+
+### 2026-09-29 — décision — Annuaire de contacts Google Workspace
+
+Création d'un annuaire dans `3_Ressources/annuaire-contacts/` pour réutiliser les coordonnées
+Google Workspace validées lors des demandes de contact. Utiliser la skill Google Workspace sans
+ouvrir Chrome ; demander à Robin tout identifiant de conversation manquant plutôt que le chercher
+dans l'interface web.
+
+### 2026-09-29 — décision — Préparation des suivis mensuels d'équipe
+
+À chaque demande de préparation d'un suivi mensuel avec une personne de l'équipe, retrouver et
+présenter le fichier de son dernier EI, puis lister les tickets Jira qu'elle a effectués entre la
+date de cet EI et la date du jour. Si le fichier ou la date de l'EI ne peut pas être retrouvé,
+signaler ce qui manque plutôt que supposer la période.
+
+### 2026-09-29 — décision — Période Jira sans EI antérieur
+
+Précision de la règle « Préparation des suivis mensuels d'équipe » : si aucun EI antérieur n'existe,
+ne pas chercher de fichier de dernier EI et lister uniquement les tickets Jira effectués au cours
+du mois précédent.

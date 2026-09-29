@@ -1,0 +1,13 @@
+name: decathlon-tech-radar
+description: "Query the Decathlon Tech Radar for technology adoption status (ADOPT, TRIAL, ASSESS, HOLD)."
+instructions: |
+  Check the Decathlon Tech Radar for the requested technology.
+  Return the technology's quadrant (Languages & Frameworks, Tools, Platforms, Techniques)
+  and its status ring:
+  - ADOPT: approved for production use
+  - TRIAL: can be used in non-critical contexts with explicit team sign-off
+  - ASSESS: interesting but not yet validated for production
+  - HOLD (Forbidden or Legacy): must NOT be used; always propose the ADOPT-ring alternative
+
+  HOLD technologies are hard-blocked. If the user requests a HOLD technology,
+  immediately surface the violation and propose the ADOPT equivalent with migration rationale.

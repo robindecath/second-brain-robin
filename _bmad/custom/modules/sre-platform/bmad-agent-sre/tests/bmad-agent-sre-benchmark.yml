@@ -1,0 +1,279 @@
+# Benchmark: bmad-agent-sre (Morgan)
+#
+# Validates the SRE agent's SKILL.md comprehension, BMAD customization
+# resolution, and sub-skill routing.
+#
+# Lives alongside the SRE agent: modules/sre-platform/bmad-agent-sre/tests/
+# Stubs: tests/stubs/*.skill.yml
+#
+# Usage (with real external sub-skills from GitHub — set env vars):
+#   export HELP_SRE_PATH=/path/to/help-sre/SKILL.md
+#   export INCIDENT_INVESTIGATION_PATH=/path/to/incident-investigation/SKILL.md
+#   export PROJECT_ROOT=.
+#   ~/go/bin/benchmark run --config modules/sre-platform/bmad-agent-sre/tests/bmad-agent-sre-benchmark.yml
+#
+# Run without env vars (uses stub skills in tests/stubs/):
+#   ~/go/bin/benchmark run --config modules/sre-platform/bmad-agent-sre/tests/bmad-agent-sre-benchmark.yml
+#
+# Run a single prompt:
+#   ~/go/bin/benchmark run --config modules/sre-platform/bmad-agent-sre/tests/bmad-agent-sre-benchmark.yml \
+#     --prompt-id persona
+
+project: bmad-agent-sre
+
+model: copilot/claude-haiku-4.5
+
+# ── Pre-activate hook ────────────────────────────────────────
+# Runs resolve_customization.py before the LLM sees any skill.
+# Its stdout (the resolved agent JSON) replaces {resolved_agent}
+# in the system_prompt below.
+#
+# This tests that the 3-layer BMAD customization merge (base +
+# team + user overrides) produces the correct agent definition.
+# Falls back to a static persona if the script is unavailable.
+pre_activate:
+  command: >-
+    uv run ${PROJECT_ROOT:-.}/_bmad/scripts/resolve_customization.py
+    --skill ${SRE_AGENT_SKILL_DIR:-./modules/sre-platform/bmad-agent-sre}
+    --key agent
+  var: resolved_agent
+
+system_prompt: >-
+  {resolved_agent}
+
+  You have access to additional tools and skills.
+  Skills provide specialized instructions and workflows for specific tasks.
+  Use the read_skill tool to load a skill when a task matches its description.
+
+# ── Listed skills (advertised in <available_skills>) ─────────
+skills:
+  - name: bmad-agent-sre
+    path: ${SRE_AGENT_SKILL_DIR:-./modules/sre-platform/bmad-agent-sre}/SKILL.md
+
+# ── Unlisted sub-skills (available via read_skill, NOT advertised) ──
+# The LLM must discover these through conversation context or routing
+# instructions in the main skill. Tests the agent's routing logic.
+# Each path defaults to a stub under tests/stubs/.
+sub_skills:
+  - name: help-sre
+    path: ${HELP_SRE_PATH:-./modules/sre-platform/bmad-agent-sre/tests/stubs/help-sre.skill.yml}
+  - name: incident-investigation
+    path: ${INCIDENT_INVESTIGATION_PATH:-./modules/sre-platform/bmad-agent-sre/tests/stubs/incident-investigation.skill.yml}
+  - name: knowledge-graph-query
+    path: ${ASSET_KG_PATH:-./modules/sre-platform/bmad-agent-sre/tests/stubs/knowledge-graph-query.skill.yml}
+  - name: blast-radius-analyzer
+    path: ${BLAST_RADIUS_PATH:-./modules/sre-platform/bmad-agent-sre/tests/stubs/blast-radius-analyzer.skill.yml}
+  - name: dd-logs
+    path: ${DD_LOGS_PATH:-./modules/sre-platform/bmad-agent-sre/tests/stubs/dd-logs.skill.yml}
+  - name: dd-apm
+    path: ${DD_APM_PATH:-./modules/sre-platform/bmad-agent-sre/tests/stubs/dd-apm.skill.yml}
+  - name: dd-monitors
+    path: ${DD_MONITORS_PATH:-./modules/sre-platform/bmad-agent-sre/tests/stubs/dd-monitors.skill.yml}
+  - name: slo-generator
+    path: ${SLO_GENERATOR_PATH:-./modules/sre-platform/bmad-agent-sre/tests/stubs/slo-generator.skill.yml}
+  - name: business-impact-estimator
+    path: ${BUSINESS_IMPACT_PATH:-./modules/sre-platform/bmad-agent-sre/tests/stubs/business-impact-estimator.skill.yml}
+
+prompts:
+  # ── Persona adoption ──────────────────────────────────────────
+  - id: persona
+    text: >-
+      Load the bmad-agent-sre skill. What is the agent's name, title,
+      and what two missions does the agent operate on?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "Morgan"
+      - type: response_contains
+        value: "Senior SRE"
+      - type: response_contains
+        value: "Platform Reliability"
+      - type: response_contains
+        value: "Incident diagnosis"
+
+  # ── Core SRE methodology (6 steps) ────────────────────────────
+  - id: methodology
+    text: >-
+      Load the bmad-agent-sre skill and list its 6-step SRE
+      methodology in order.
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "Assess"
+      - type: response_contains
+        value: "Define"
+      - type: response_contains
+        value: "Verify"
+      - type: response_contains
+        value: "Implement"
+      - type: response_contains
+        value: "Automate"
+      - type: response_contains
+        value: "Test"
+
+  # ── Golden signals ────────────────────────────────────────────
+  - id: golden-signals
+    text: >-
+      Load the bmad-agent-sre skill. Name the four golden signals
+      of monitoring.
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "latency"
+      - type: response_contains
+        value: "traffic"
+      - type: response_contains
+        value: "errors"
+      - type: response_contains
+        value: "saturation"
+
+  # ── MUST DO rules ─────────────────────────────────────────────
+  - id: must-do
+    text: >-
+      Load the bmad-agent-sre skill. What quantitative target must
+      you always define for SLOs?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "99.9"
+
+  # ── MUST NOT rules ────────────────────────────────────────────
+  - id: must-not
+    text: >-
+      Load the bmad-agent-sre skill. Above what toil percentage must
+      you have an automation plan?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "50"
+      - type: response_contains
+        value: "toil"
+
+  # ── Incident routing ──────────────────────────────────────────
+  - id: incident-mode-a
+    text: >-
+      Load the bmad-agent-sre skill. If a user reports "oneff is
+      down", which incident mode should you use and what sub-skill
+      should you load?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "Mode A"
+      - type: response_contains
+        value: "incident-investigation"
+
+  # ── Cluster-level incident ────────────────────────────────────
+  - id: incident-mode-b
+    text: >-
+      Load the bmad-agent-sre skill. A user reports issues with a
+      Kubernetes cluster. Which incident mode applies?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "Mode B"
+
+  # ── Skills inventory ──────────────────────────────────────────
+  - id: skill-list
+    text: >-
+      Load the bmad-agent-sre skill. Name three Datadog-related
+      skills the agent can invoke.
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "dd-logs"
+      - type: response_contains
+        value: "dd-apm"
+      - type: response_contains
+        value: "dd-monitors"
+
+  # ── Activation steps ──────────────────────────────────────────
+  - id: activation
+    text: >-
+      Load the bmad-agent-sre skill. How many activation steps does
+      Morgan follow before dispatching a request?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "Step 9"
+
+  # ── Easter egg awareness ──────────────────────────────────────
+  - id: easter-egg
+    text: >-
+      Load the bmad-agent-sre skill. What triggers the easter egg
+      behavior, and in which step does Morgan check for it?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains_ignore_case
+        value: "easter"
+      - type: response_contains
+        value: "Internal Monologue"
+      - type: response_contains
+        value: "Step 8"
+
+  # ── Business impact routing ───────────────────────────────────
+  - id: business-impact
+    text: >-
+      Load the bmad-agent-sre skill. If a user asks about financial
+      loss from an incident, which additional skill should you load
+      after incident-investigation completes?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "business-impact-estimator"
+
+  # ── Routing: help-sre for product onboarding ──────────────────
+  - id: route-product-onboarding
+    text: >-
+      Load the bmad-agent-sre skill. A team is onboarding a new
+      product and needs SLO definitions and monitoring setup. Which
+      sub-skill should you invoke?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "help-sre"
+
+  # ── Conventions ───────────────────────────────────────────────
+  - id: conventions
+    text: >-
+      Load the bmad-agent-sre skill. From the conventions section,
+      what resolves to the installed skill directory?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "skill-root"
+
+  # ── Activation: pre_activate output ───────────────────────────
+  - id: pre-activate-output
+    text: >-
+      Based on the resolved agent configuration provided in the
+      system prompt, what is the agent's communication style
+      requirement?
+    asserts:
+      - type: response_contains
+        value: "Lead with the answer"

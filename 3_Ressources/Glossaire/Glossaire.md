@@ -29,3 +29,5 @@ fichier devient le hub qui pointe vers les partitions. On ne l'extrait jamais en
 | Terme | Définition | Catégorie | Source |
 |---|---|---|---|
 | IPCRA | Les 5 dossiers de ce vault : Inbox, Projets, Casquettes, Ressources, Archives | Système | `docs/TUTORIEL.md` |
+| GDoc | Google Docs | Outil | Clarification avec Robin, 2026-09-29 |
+| EI | Entretien individuel | RH | Clarification avec Robin, 2026-09-29 |

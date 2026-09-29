@@ -1,0 +1,6 @@
+name: dd-monitors
+description: Searches Datadog monitors, parses alert titles, and understands alerting context for active incidents.
+instructions: |
+  Search Datadog monitors by name, tag, or status. Parse alert titles
+  and notification messages to understand the alerting context. Check
+  monitor history for breach duration and previous alert patterns.

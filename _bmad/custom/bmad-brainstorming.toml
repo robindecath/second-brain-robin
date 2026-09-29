@@ -1,0 +1,72 @@
+# Team overrides for bmad-brainstorming — Guided Ideation workflow
+# Merged on top of .agents/skills/bmad-brainstorming/customize.toml
+# Scalar values override defaults; arrays append to defaults.
+#
+# Purpose of this customization:
+# Every time a brainstorming session finishes, publication to the shared archive
+# must be gated by explicit user consent. The user must be told that publication
+# makes content visible to the `dktunited` org audience before they decide.
+# If consent is granted, the push remains idempotent (upsert semantics).
+
+[workflow]
+
+persistent_facts = [
+  "`content-design` is the required Decathlon skill whenever a brainstorm explicitly creates or reviews customer-facing UI copy, microcopy, screen content hierarchy, user-flow wording, or copy variants. Use its guidance for clear, accessible UK English and consistent, actionable content; keep ideation proposals distinct from validated user evidence. It excludes marketing, slogans, legal/compliance copy, and translation/localisation.",
+  "`ux-research` is Decathlon's canonical and MANDATORY UX research methodology, and it is exclusive: when the session needs evidence about real users, or produces How-Might-We statements, an opportunity solution tree, personas, journeys, or jobs-to-be-done, route through the `ux-research` skill and use its templates instead of an ad-hoc format or a competing framework. Ideas produced in a brainstorm are hypotheses, never findings — do not label them as user needs, and never fabricate a quote, participant, statistic, or persona to make an idea look validated. When an idea hinges on an unverified user assumption, name the assumption and propose a `ux-research` study to resolve it.",
+  "Before publishing any brainstorming artefact to `dktunited/brainstorming-artifacts`, ask for explicit user consent and wait for their answer. The request must explain that publication makes the brainstorming visible to everyone with access to the `dktunited` organization repository and the internal Decathlon Pages mirror.",
+  "When brainstorming a product, feature, or campaign that involves visual content (imagery, sport scenes, product photos, lifestyle shots), Decathlon's real media assets are available via the `decathlon-pixl-search` skill — use them to ground ideas in actual brand assets and avoid designing around purely hypothetical visuals.",
+  "The project name is captured during the 'setup project environment' step (Decathlon AI Augmented SDLC Copilot App canvas or VS Code extension) and is available at runtime as the standard config variable `{project_name}`. Everything archived in `dktunited/brainstorming-artifacts` must live under a top-level folder named after that project, so each project's brainstorming output is grouped together.",
+  "The `dktunited/brainstorming-artifacts` repository is deployed as a static site on Decathlon Pages at `https://brainstorming-artifacts.pages.dktapp.cloud/`. This is an internal Decathlon service — the site is reachable only via Zscaler (VPN enabled) or from the Decathlon corporate network, not publicly. The URL mirrors the repository tree exactly: a file at repo path `<project-slug>/<topic-slug>/<filename>` is served at `https://brainstorming-artifacts.pages.dktapp.cloud/<project-slug>/<topic-slug>/<filename>` (e.g. repo path `brainstorming-test/future-of-sports/brainstorm.html` -> `https://brainstorming-artifacts.pages.dktapp.cloud/brainstorming-test/future-of-sports/brainstorm.html`). After artefacts are pushed to the repo, the static site redeploys automatically and the link is usually reachable within ~1-2 minutes (it may 404 briefly right after the push).",
+]
+
+# Mandatory post-brainstorming action: first collect explicit consent for
+# organization-wide publication; only then publish to the shared archive.
+on_complete = """
+Once the brainstorming session is finalized and the output artefacts have been written locally, first ask the user for explicit consent before publishing anything to `dktunited/brainstorming-artifacts`. Explain that publishing there makes the brainstorming visible to everyone with repository access in the `dktunited` organization and available on the internal Decathlon Pages mirror. Wait for the user's decision before proceeding.
+
+If the user answers **no**, do not publish and explicitly confirm that artefacts remain local only.
+
+If the user answers **yes**, publish to the shared team archive at `dktunited/brainstorming-artifacts` (branch `main`), inside a top-level folder named after the current project, overwriting any previous copy for the same topic.
+
+Publish procedure:
+
+1. Resolve the project name from the standard config variable `{project_name}` (the name entered during 'setup project environment'). If it is somehow empty, ask the user for the project name rather than guessing. Turn it into a filesystem-safe slug (lowercase, spaces and punctuation replaced by `-`) — this is the top-level archive folder so every artefact for this project is grouped under `<project-slug>/`.
+
+2. Build a stable, filesystem-safe slug from the brainstorming topic (lowercase, spaces and punctuation replaced by `-`, e.g. "New checkout flow" -> `new-checkout-flow`). All artefacts for a session live under `<project-slug>/<topic-slug>/`. Reusing the same project + topic slug intentionally overwrites the earlier session's artefacts (upsert semantics).
+
+3. For each produced artefact that exists locally — `brainstorm.html`, and if present `brainstorm-intent.md` and the `.memlog.md` record — upload it to `dktunited/brainstorming-artifacts` at path `<project-slug>/<topic-slug>/<filename>` using the GitHub Contents API. The Contents API requires the current blob `sha` when a file already exists, so always resolve it first (empty when the file is new) and pass it on write. Use this exact pattern per file:
+
+```bash
+REPO="dktunited/brainstorming-artifacts"
+BRANCH="main"
+PROJECT="<project-slug>"       # from {project_name}, e.g. my-mobile-app
+TOPIC="<topic-slug>"           # e.g. new-checkout-flow
+LOCAL="<path/to/local/file>"   # e.g. ./brainstorm.html
+NAME="$(basename "$LOCAL")"
+DEST="${PROJECT}/${TOPIC}/${NAME}"
+
+# Existing sha (empty if the file does not exist yet) — enables overwrite.
+SHA="$(gh api "/repos/${REPO}/contents/${DEST}?ref=${BRANCH}" --jq .sha 2>/dev/null || true)"
+
+# Base64-encode the artefact (single line, no wrapping).
+CONTENT="$(base64 < "$LOCAL" | tr -d '\\n')"
+
+# Create or overwrite the file on main.
+gh api --method PUT "/repos/${REPO}/contents/${DEST}" \
+  -f message="brainstorm(${PROJECT}/${TOPIC}): archive ${NAME}" \
+  -f branch="${BRANCH}" \
+  -f content="${CONTENT}" \
+  ${SHA:+-f sha="${SHA}"}
+```
+
+4. After all artefacts are pushed, clearly tell the user that their brainstorming has been archived in **two places**: (a) the GitHub repository `dktunited/brainstorming-artifacts` under `<project-slug>/<topic-slug>/` (give the repo links), and (b) the **Decathlon Pages** static site (an internal service reachable via Zscaler/VPN or the Decathlon network, not public), where each artefact at repo path `<project-slug>/<topic-slug>/<filename>` is served at `https://brainstorming-artifacts.pages.dktapp.cloud/<project-slug>/<topic-slug>/<filename>` — provide these ready-to-share URLs (for `brainstorm.html` in particular). Also warn the user that the Decathlon Pages link usually needs **~1-2 minutes** after the push before it becomes available (the static site redeploys), so if the link 404s at first they should wait a moment and retry. The GitHub repo copy is available immediately.
+
+If `gh` is not authenticated or the push fails, surface the error to the user with the exact `gh` command so they can retry or run it manually — never silently drop the artefacts.
+"""
+
+external_sources = [
+  "When ideation explicitly moves into customer-facing UI copy, microcopy, content hierarchy, screen content, user-flow wording, or copy variants, invoke `content-design` and follow its guidance. Do not use it for marketing, slogans, legal/compliance copy, or translation/localisation. If it is not installed, tell the user to run: `npx skills add dktunited/agent-skills --skill content-design`",
+  "When the session moves from raw ideation toward framing — How-Might-We statements, opportunity mapping, an opportunity solution tree, jobs-to-be-done, personas, journeys — or when someone asks how to validate an idea with users (research plan, interviews, usability test, survey), invoke `ux-research` and use its workflow and templates. Do not improvise a validation approach or import another discovery framework. If the skill is not installed, tell the user to run: `npx skills add dktunited/agent-skills --skill ux-research`",
+  "When the user mentions an external tool or platform — or asks about available MCPs — invoke `decathlon-find-mcp-server`. If the skill is not installed, tell the user to run: `npx skills add dktunited/ai-augmented-sdlc --skill decathlon-find-mcp-server`",
+  "When the user asks about AI Augmented Development at Decathlon — GitHub Copilot usage, billing or quota, the AI Augmented SDLC platform, coding standards, agent skills, MCP servers, trainings, talks or monthly community calls — consult the official documentation via `decathlon-ai-augmented-development-docs`, which reads the versioned `llms-full.txt` bundle from dktunited/ai-augmented-development (read ONLY the `llms-full.txt` files — never the link-only `llms.txt`/`llms-pages.txt` indexes, which point back to the login-gated site). If the skill is not installed, tell the user to run: `npx skills add dktunited/ai-augmented-sdlc --skill decathlon-ai-augmented-development-docs`",
+]

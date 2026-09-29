@@ -1,0 +1,218 @@
+# Benchmark: bmad-agent-pm (John)
+#
+# Validates the Product Manager agent's Decathlon customization:
+# - 3-layer TOML merge (base → team → user)
+# - Persona adoption (John, Product Manager)
+# - Mandatory Tech Radar and Tech Compliance invocations
+# - AppReferential (KG) routing for named Decathlon assets
+# - Discovery pattern: KG-grounded story drafting
+# - Accessibility captured in acceptance criteria
+# - Repository topology recommendation for broad new projects
+# - Confirmed repository actions through the installed gh CLI
+#
+# Lives alongside the override: tests/bmad-agent-pm/
+# Stubs: tests/bmad-agent-pm/stubs/*.skill.yml
+#
+# Run offline (stubs):
+#   benchmark run --config tests/bmad-agent-pm/bmad-agent-pm-benchmark.yml
+#
+# Run against a real bmad project (set env vars):
+#   export PROJECT_ROOT=/path/to/bmadtest4
+#   export PM_AGENT_SKILL_DIR=/path/to/bmadtest4/.agents/skills/bmad-agent-pm
+#   export TECH_RADAR_PATH=/path/to/bmadtest4/.agents/skills/decathlon-tech-radar/SKILL.md
+#   export TECH_COMPLIANCE_PATH=/path/to/bmadtest4/.agents/skills/decathlon-tech-compliance/SKILL.md
+#   export ASSET_KG_PATH=/path/to/bmadtest4/.agents/skills/knowledge-graph-query/SKILL.md
+#
+# Run a single prompt:
+#   benchmark run --config tests/bmad-agent-pm/bmad-agent-pm-benchmark.yml --prompt-id persona
+
+project: bmad-agent-pm
+
+model: copilot/claude-haiku-4.5
+
+# ── Pre-activate hook ─────────────────────────────────────────
+pre_activate:
+  command: >-
+    uv run ${PROJECT_ROOT:-.}/_bmad/scripts/resolve_customization.py
+    --skill ${PM_AGENT_SKILL_DIR:-./.agents/skills/bmad-agent-pm}
+    --key agent
+  var: resolved_agent
+
+system_prompt: >-
+  {resolved_agent}
+
+  You have access to additional tools and skills.
+  Skills provide specialized instructions and workflows for specific tasks.
+  Use the read_skill tool to load a skill when a task matches its description.
+
+# ── Listed (advertised) skills ────────────────────────────────
+skills:
+  - name: bmad-agent-pm
+    path: ${PM_AGENT_SKILL_DIR:-./.agents/skills/bmad-agent-pm}/SKILL.md
+
+# ── Unlisted sub-skills (routing targets) ─────────────────────
+sub_skills:
+  - name: decathlon-tech-radar
+    path: ${TECH_RADAR_PATH:-./tests/bmad-agent-pm/stubs/decathlon-tech-radar.skill.yml}
+  - name: decathlon-tech-compliance
+    path: ${TECH_COMPLIANCE_PATH:-./tests/bmad-agent-pm/stubs/decathlon-tech-compliance.skill.yml}
+  - name: knowledge-graph-query
+    path: ${ASSET_KG_PATH:-./tests/bmad-agent-pm/stubs/knowledge-graph-query.skill.yml}
+  - name: ux-research
+    path: ${UX_RESEARCH_PATH:-./tests/bmad-agent-pm/stubs/ux-research.skill.yml}
+
+prompts:
+  # ── Persona adoption ──────────────────────────────────────────
+  - id: persona
+    text: >-
+      Load the bmad-agent-pm skill. What is the agent's name and title?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "John"
+      - type: response_contains
+        value: "Product Manager"
+
+  # ── Principles: Tech Radar ────────────────────────────────────
+  - id: tech-radar-principle
+    text: >-
+      Load the bmad-agent-pm skill. According to the agent's principles,
+      which skill must always be invoked?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "decathlon-tech-radar"
+
+  # ── Principles: Tech Compliance at feature scoping ───────────
+  - id: tech-compliance-principle
+    text: >-
+      Load the bmad-agent-pm skill. When should the tech-compliance skill
+      be invoked during product work?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "decathlon-tech-compliance"
+      - type: response_contains_ignore_case
+        value: "feature"
+
+  # ── Routing: KG first for named Decathlon assets ─────────────
+  - id: route-knowledge-graph
+    text: >-
+      Load the bmad-agent-pm skill. A stakeholder wants to add a user
+      story for integrating with the Decathlon catalog-search product.
+      What must you do before drafting any story scope?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "knowledge-graph-query"
+
+  # ── Discovery pattern ─────────────────────────────────────────
+  - id: discovery-pattern
+    text: >-
+      Load the bmad-agent-pm skill. Describe the product discovery pattern
+      when a user story references a named Decathlon product.
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "knowledge-graph-query"
+      - type: response_contains_ignore_case
+        value: "domain"
+
+  # ── Accessibility in acceptance criteria ─────────────────────
+  - id: accessibility-ac
+    text: >-
+      Load the bmad-agent-pm skill. Should accessibility requirements be
+      captured in user story acceptance criteria?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains_ignore_case
+        value: "accessibility"
+      - type: response_contains_ignore_case
+        value: "acceptance"
+
+  # ── KG: don't assume SI without querying ─────────────────────
+  - id: no-assumptions
+    text: >-
+      Load the bmad-agent-pm skill. Is it acceptable to draft scope for
+      a Decathlon API integration without first querying AppReferential?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains_ignore_case
+        value: "no"
+        # Matches: "no", "never", "not acceptable", "unacceptable"
+
+  # ── Broad-project repository recommendation ─────────────────
+  - id: broad-project-repository-recommendation
+    text: >-
+      Load the bmad-agent-pm skill. We are scoping a new product with
+      independently maintained specifications, a Next.js frontend, and a
+      Spring Boot backend. What repository topology should you recommend,
+      and how does the SIG Delivery recommendation apply?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "-specs"
+      - type: response_contains
+        value: "-front"
+      - type: response_contains
+        value: "-back"
+      - type: response_contains_ignore_case
+        value: "single"
+      - type: response_contains_ignore_case
+        value: "framework"
+
+  # ── Repository actions require confirmation ─────────────────
+  - id: confirmed-gh-repository-actions
+    text: >-
+      Load the bmad-agent-pm skill. The user accepts the proposed repository
+      topology. What installed tool can help create or update the repositories,
+      and what must happen before you mutate them?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "gh"
+      - type: response_contains_ignore_case
+        value: "confirm"
+
+  # ── UX research: evidence behind user needs ──────────────────
+  - id: ux-research-routing
+    text: >-
+      Load the bmad-agent-pm skill. A requirement rests on a claimed user
+      pain point with no evidence. Which skill must you invoke?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "ux-research"
+
+  # ── UX research: no fabricated evidence ──────────────────────
+  - id: ux-research-no-fabrication
+    text: >-
+      Load the bmad-agent-pm skill. Can you write "4 out of 6 users told us"
+      in a PRD based on a small qualitative sample?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains_ignore_case
+        value: "no"
+        # Matches: "no", "never", "not acceptable"

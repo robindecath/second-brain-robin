@@ -20,6 +20,7 @@ Rôles permanents (sans date de fin), 2 à 4 maximum. Chacun devient un dossier 
 `2_Casquettes/`.
 
 - `Tech lead Datacost`
+- `Tech lead refonte Datacost (V3)`
 - `Suivi des externes de l'équipe`
 
 ## 3. Ton et langue
@@ -65,3 +66,4 @@ dictes toi-même à l'agent :
 | Jira | Tout. | Lecture seulement. | Écriture dans le projet BST2 uniquement, après ton accord ; toute autre écriture n'est pas autorisée. |
 | Confluence | Tout. | Lecture seulement. | Aucune écriture autorisée. |
 | Datadog | Les informations du projet Datacost. | Lecture seulement. | Aucune autre action autorisée. |
+| Google Workspace (Gmail, Google Chat, Google Docs) | Emails Gmail, conversations Google Chat et documents Google, lorsque les connecteurs correspondants sont disponibles. | Lecture seulement. | Toute écriture nécessite ton accord explicite. |

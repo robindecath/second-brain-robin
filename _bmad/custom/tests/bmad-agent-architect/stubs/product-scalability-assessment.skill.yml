@@ -1,0 +1,18 @@
+name: product-scalability-assessment
+description: "Evidence-based scalability-readiness / tech-debt assessment for an existing Decathlon product before it is promoted or scaled to more regions/countries."
+instructions: |
+  Produce a scalability-readiness assessment for a named Decathlon product: can it be
+  safely promoted / scaled to more regions or countries, and what must happen first?
+
+  Chain the evidence sources in order — never fabricate any figure:
+  - knowledge-graph-query (AppReferential): asset map, ownership, infra, SLOs, tier
+  - decathlon-tech-radar: technology currency (ADOPT/TRIAL/ASSESS/HOLD)
+  - endoflife.date: runtime/framework end-of-life currency
+  - decathlon-api-discovery: API exposure (provided/consumed)
+  - delivery-metrics: reliability, DORA, SonarQube, QuAPI
+  - decathlon-tech-compliance: SIG maturity across the 6 domains
+  - a Gini / bus-factor pass (user-supplied — not in AppReferential/DeliveryMetrics)
+
+  Every number MUST trace to a source. A missing tier / SLO / RELIABILITY score is a
+  first-order scaling blocker. Emit a single evidence-based Now/Next/Later report and
+  refuse to invent any figure.

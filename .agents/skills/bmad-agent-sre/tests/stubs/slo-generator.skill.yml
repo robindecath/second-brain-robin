@@ -1,0 +1,7 @@
+name: slo-generator
+description: Discovers SLI YAML definitions from dktunited/slo-generator repository via GitHub to get SLO definitions, metric queries, and targets before fetching live values.
+instructions: |
+  Before any Datadog SLO query, load this skill to discover SLI YAML
+  definitions. Look for the service name or component to find the
+  matching SLI file. Extract the metric query, SLO target, and
+  compliance period from the definition.

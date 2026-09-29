@@ -1,0 +1,146 @@
+# Benchmark: bmad-ux workflow (UX Design)
+project: bmad-ux
+model: copilot/claude-haiku-4.5
+
+# ── Pre-activate hook ─────────────────────────────────────────
+pre_activate:
+  command: >-
+    uv run ${PROJECT_ROOT:-.}/_bmad/scripts/resolve_customization.py
+    --skill ${UX_WORKFLOW_SKILL_DIR:-./.agents/skills/bmad-ux}
+    --key workflow
+  var: resolved_agent
+
+system_prompt: >-
+  {resolved_agent}
+
+  You are an AI agent helping with UX/UI design.
+  You have access to specialized skills for design system guidance and accessibility.
+
+skills:
+  - name: bmad-ux-workflow
+    path: ${UX_WORKFLOW_SKILL_DIR:-./.agents/skills/bmad-ux}/SKILL.md
+
+sub_skills:
+  - name: web-ui-development
+    path: ./tests/bmad-ux/stubs/web-ui-development.skill.yml
+  - name: web-accessibility-evaluation
+    path: ./tests/bmad-ux/stubs/web-accessibility-evaluation.skill.yml
+  - name: delivery-metrics
+    path: ./tests/bmad-ux/stubs/delivery-metrics.skill.yml
+  - name: better-auth-fedid-configuration-nextjs
+    path: ./tests/bmad-ux/stubs/better-auth-fedid-configuration-nextjs.skill.yml
+  - name: ux-research
+    path: ./tests/bmad-ux/stubs/ux-research.skill.yml
+
+prompts:
+  - id: activation-vitamin-play
+    text: >-
+      Load the UX workflow. What design system must be invoked at the start
+      of any mockup or design work?
+    asserts:
+      - type: response_contains
+        value: "web-ui-development"
+
+  - id: persistent-vitamin-play-mandatory
+    text: >-
+      Load the UX workflow. Is the Vitamin Play design system optional or
+      mandatory for every mockup?
+    asserts:
+      - type: response_contains_ignore_case
+        value: "mandatory"
+
+  - id: persistent-wcag-mandatory
+    text: >-
+      Load the UX workflow. What is the WCAG accessibility level requirement
+      for Decathlon UX designs?
+    asserts:
+      - type: response_contains
+        value: "2.2 AA"
+
+  - id: external-source-delivery-metrics
+    text: >-
+      Load the UX workflow. To ground designs in User Journey context,
+      which external knowledge source should be consulted?
+    asserts:
+      - type: response_contains
+        value: "delivery-metrics"
+
+  # ── Activation: research evidence base ────────────────────────
+  - id: activation-ux-research
+    text: >-
+      Load the UX workflow. Before making design decisions, what must be
+      established about user evidence, and with which skill?
+    asserts:
+      - type: response_contains
+        value: "ux-research"
+
+  # ── ux-research is exclusive, not one option among many ───────
+  - id: ux-research-exclusive
+    text: >-
+      Load the UX workflow. Is it acceptable to use a different research
+      framework or an improvised persona template for this phase?
+    asserts:
+      - type: response_contains_ignore_case
+        value: "no"
+      - type: response_contains
+        value: "ux-research"
+
+  # ── ux-research applies to CLI/API projects too ───────────────
+  - id: ux-research-interface-agnostic
+    text: >-
+      Load the UX workflow. This project is a CLI with no browser surface.
+      Does the user research requirement still apply?
+    asserts:
+      - type: response_contains_ignore_case
+        value: "yes"
+
+  # ── Sign-off gate: counter-evidence and confidence ────────────
+  - id: ux-research-signoff-gate
+    text: >-
+      Load the UX workflow. What research-evidence checks block UX sign-off?
+    asserts:
+      - type: response_contains_ignore_case
+        value: "citation"
+      - type: response_contains_ignore_case
+        value: "confidence"
+
+  # ── Rendering rule: markdown deliverables exempt ──────────────
+  - id: rendering-markdown-exempt
+    text: >-
+      Load the UX workflow. I am writing the research plan as a markdown file.
+      Do I have to build it with the Vitamin Play design system?
+    asserts:
+      - type: response_contains_ignore_case
+        value: "no"
+
+  # ── Rendering rule: web artefact must use Vitamin Play ────────
+  - id: rendering-web-artefact
+    text: >-
+      Load the UX workflow. I want to ship the research shareout as an
+      interactive HTML prototype instead of markdown. What must I use?
+    asserts:
+      - type: response_contains
+        value: "web-ui-development"
+      - type: response_contains
+        value: "Vitamin Play"
+
+  # ── Rendering rule overrides the CLI interface-type gate ──────
+  - id: rendering-overrides-cli-gate
+    text: >-
+      Load the UX workflow. This project is a CLI with no browser surface,
+      but I am rendering the debrief deck as an HTML page. Does Vitamin Play
+      apply to that page?
+    asserts:
+      - type: response_contains_ignore_case
+        value: "yes"
+      - type: response_contains
+        value: "Vitamin Play"
+
+  # ── Rendering rule excludes BMAD default artefacts ────────────
+  - id: rendering-excludes-bmad-defaults
+    text: >-
+      Load the UX workflow. BMAD already generated a brainstorm.html artefact
+      by default. Should I rebuild it with the Vitamin Play design system?
+    asserts:
+      - type: response_contains_ignore_case
+        value: "no"

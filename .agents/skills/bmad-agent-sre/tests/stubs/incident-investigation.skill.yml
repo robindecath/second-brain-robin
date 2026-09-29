@@ -1,0 +1,10 @@
+name: incident-investigation
+description: "Full incident investigation workflow: triage, health check, SLO breach assessment, root-cause analysis, blast radius, and post-mortem history."
+instructions: |
+  Investigate incidents end-to-end. Detect the incident mode first:
+  Mode A = service-level incident, Mode B = cluster/infra incident,
+  Mode C = health check, Mode D = history review, Mode E = alert parsing.
+  Use the knowledge graph to identify the affected asset, then query
+  observability tools for logs, traces, and monitors. Produce a structured
+  root-cause report with timeline, affected assets, blast radius, and
+  escalation contacts.

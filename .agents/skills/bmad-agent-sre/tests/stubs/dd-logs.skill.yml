@@ -1,0 +1,7 @@
+name: dd-logs
+description: Searches and analyses Datadog logs for incident investigation, anomaly diagnosis, and root cause analysis.
+instructions: |
+  Query Datadog logs using search syntax. Filter by service, namespace,
+  environment, and time range. Look for error patterns, stack traces,
+  and anomaly indicators. Correlate findings with APM traces and
+  monitor alerts for comprehensive incident diagnosis.

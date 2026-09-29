@@ -1,0 +1,319 @@
+# Benchmark: bmad-agent-architect (Winston)
+#
+# Validates the System Architect agent's Decathlon customization:
+# - 3-layer TOML merge (base → team → user)
+# - Persona adoption (Winston, System Architect)
+# - Tech Radar: HOLD technologies blocked, ADOPT alternative proposed
+# - Tech Compliance: SIG maturity check across 6 domains
+# - AppReferential (KG) routing before architectural assumptions
+# - FedID authentication architecture routing (Spring Boot, Next.js, Astro)
+# - Web architecture: WCAG 2.2 AA / RGAA at architecture level
+# - Non-blocking SIG Delivery repository-topology recommendation
+#
+# Lives alongside the override: tests/bmad-agent-architect/
+# Stubs: tests/bmad-agent-architect/stubs/*.skill.yml
+#
+# Run offline (stubs):
+#   benchmark run --config tests/bmad-agent-architect/bmad-agent-architect-benchmark.yml
+#
+# Run against a real bmad project (set env vars):
+#   export PROJECT_ROOT=/path/to/bmadtest4
+#   export ARCH_AGENT_SKILL_DIR=/path/to/bmadtest4/.agents/skills/bmad-agent-architect
+#   export TECH_RADAR_PATH=/path/to/bmadtest4/.agents/skills/decathlon-tech-radar/SKILL.md
+#   export TECH_COMPLIANCE_PATH=/path/to/bmadtest4/.agents/skills/decathlon-tech-compliance/SKILL.md
+#   export ASSET_KG_PATH=/path/to/bmadtest4/.agents/skills/knowledge-graph-query/SKILL.md
+#   export FEDID_SPRING_PATH=/path/to/bmadtest4/.agents/skills/spring-boot-fedid-resource-server/SKILL.md
+#   export FEDID_ASTRO_PATH=/path/to/bmadtest4/.agents/skills/better-auth-fedid-configuration-astro/SKILL.md
+#
+# Run a single prompt:
+#   benchmark run --config tests/bmad-agent-architect/bmad-agent-architect-benchmark.yml --prompt-id persona
+
+project: bmad-agent-architect
+
+model: copilot/claude-haiku-4.5
+
+# ── Pre-activate hook ─────────────────────────────────────────
+pre_activate:
+  command: >-
+    uv run ${PROJECT_ROOT:-.}/_bmad/scripts/resolve_customization.py
+    --skill ${ARCH_AGENT_SKILL_DIR:-./.agents/skills/bmad-agent-architect}
+    --key agent
+  var: resolved_agent
+
+system_prompt: >-
+  {resolved_agent}
+
+  You have access to additional tools and skills.
+  Skills provide specialized instructions and workflows for specific tasks.
+  Use the read_skill tool to load a skill when a task matches its description.
+
+# ── Listed (advertised) skills ────────────────────────────────
+skills:
+  - name: bmad-agent-architect
+    path: ${ARCH_AGENT_SKILL_DIR:-./.agents/skills/bmad-agent-architect}/SKILL.md
+
+# ── Unlisted sub-skills (routing targets) ─────────────────────
+sub_skills:
+  - name: decathlon-tech-radar
+    path: ${TECH_RADAR_PATH:-./tests/bmad-agent-architect/stubs/decathlon-tech-radar.skill.yml}
+  - name: decathlon-tech-compliance
+    path: ${TECH_COMPLIANCE_PATH:-./tests/bmad-agent-architect/stubs/decathlon-tech-compliance.skill.yml}
+  - name: knowledge-graph-query
+    path: ${ASSET_KG_PATH:-./tests/bmad-agent-architect/stubs/knowledge-graph-query.skill.yml}
+  - name: spring-boot-fedid-resource-server
+    path: ${FEDID_SPRING_PATH:-./tests/bmad-agent-architect/stubs/spring-boot-fedid-resource-server.skill.yml}
+  - name: better-auth-fedid-configuration-astro
+    path: ${FEDID_ASTRO_PATH:-./tests/bmad-agent-architect/stubs/better-auth-fedid-configuration-astro.skill.yml}
+  - name: cybersecurity-threat-modeling
+    path: ${THREAT_MODELING_PATH:-./tests/bmad-agent-architect/stubs/cybersecurity-threat-modeling.skill.yml}
+  - name: product-scalability-assessment
+    path: ${SCALABILITY_ASSESSMENT_PATH:-./tests/bmad-agent-architect/stubs/product-scalability-assessment.skill.yml}
+
+prompts:
+  # ── Persona adoption ──────────────────────────────────────────
+  - id: persona
+    text: >-
+      Load the bmad-agent-architect skill. What is the agent's name and title?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "Winston"
+      - type: response_contains
+        value: "System Architect"
+
+  # ── Tech Radar: always invoke ─────────────────────────────────
+  - id: tech-radar-principle
+    text: >-
+      Load the bmad-agent-architect skill. According to the agent's principles,
+      which skill must always be invoked for any technology choice?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "decathlon-tech-radar"
+
+  # ── Tech Radar: HOLD technologies blocked ────────────────────
+  - id: hold-blocked
+    text: >-
+      Load the bmad-agent-architect skill. What must happen when a
+      proposed technology is in the HOLD ring of the Tech Radar?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains_ignore_case
+        value: "block"
+      - type: response_contains_ignore_case
+        value: "adopt"
+
+  # ── Tech Compliance: system design ───────────────────────────
+  - id: tech-compliance-principle
+    text: >-
+      Load the bmad-agent-architect skill. When must the tech-compliance
+      skill be invoked during architecture work?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "decathlon-tech-compliance"
+      - type: response_contains_ignore_case
+        value: "SIG"
+
+  # ── Routing: KG before assumptions ───────────────────────────
+  - id: route-knowledge-graph
+    text: >-
+      Load the bmad-agent-architect skill. Before making architectural
+      decisions about the Decathlon orders-front product, what skill
+      must be invoked first?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "knowledge-graph-query"
+
+  # ── Architecture review pattern ───────────────────────────────
+  - id: architecture-review-pattern
+    text: >-
+      Load the bmad-agent-architect skill. Describe the architecture
+      review pattern when a request references multiple Decathlon assets.
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "knowledge-graph-query"
+      - type: response_contains_ignore_case
+        value: "ownership"
+
+  # ── Routing: Spring Boot FedID resource server ────────────────
+  - id: route-fedid-spring
+    text: >-
+      Load the bmad-agent-architect skill. I am designing a Spring Boot
+      API that must be protected using Decathlon FedID. Which skill handles
+      this authentication architecture?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "spring-boot-fedid-resource-server"
+
+  # ── Routing: Astro FedID ──────────────────────────────────────
+  - id: route-fedid-astro
+    text: >-
+      Load the bmad-agent-architect skill. The frontend is built with Astro
+      and needs to authenticate users via Decathlon FedID. Which skill applies?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "better-auth-fedid-configuration-astro"
+
+  # ── Web accessibility at architecture level ───────────────────
+  - id: accessibility-architecture
+    text: >-
+      Load the bmad-agent-architect skill. When is accessibility validation
+      required during web frontend architecture work?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains_ignore_case
+        value: "accessibility"
+      - type: response_contains_ignore_case
+        value: "sign"
+        # Matches: "sign-off", "sign off", "signature", "sign-off by", "design sign-off"
+
+  # ── Routing: threat modeling for a new system ─────────────────
+  - id: route-threat-modeling
+    text: >-
+      Load the bmad-agent-architect skill. I am designing a new
+      payment-processing system that exchanges data with an external
+      provider. Which skill must be invoked to identify and prioritize
+      security risks during the design phase?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "cybersecurity-threat-modeling"
+
+  - id: threat-model-artifact-location
+    text: >-
+      Load the bmad-agent-architect skill. Where must the cybersecurity threat
+      model, security requirements, and verification checklist be written in
+      this BMAD installation, and which upstream default directory must not be
+      used?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "_specs/"
+      - type: response_contains_ignore_case
+        value: "docs/security"
+
+  # ── Threat modeling is a conversational gate ──────────────────
+  - id: threat-modeling-gate
+    text: >-
+      Load the bmad-agent-architect skill. According to the agent's
+      principles, how must threat-modeling results be handled before an
+      architecture is signed off?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains_ignore_case
+        value: "P0"
+      - type: response_contains_ignore_case
+        value: "sign"
+
+  # ── Regression guard: skill must NOT auto-trigger on routine ops work ──
+  # Reported by SIG AIAD: the skill was auto-invoked on a simple devops
+  # task (creating a Datadog monitor), forcing the user to explicitly ask
+  # to skip it. The trigger condition must exclude operational-only work
+  # with no new data flow, identity, or trust-boundary change.
+  - id: no-threat-model-on-routine-ops-task
+    text: >-
+      Load the bmad-agent-architect skill. I just need to create a Datadog
+      monitor to alert on error-rate spikes for an existing service — no
+      code or architecture changes. According to the agent's principles,
+      does this require invoking cybersecurity-threat-modeling?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains_ignore_case
+        value: "does not"
+
+  # ── Regression guard: gate must not re-open once resolved (no loop) ──
+  # Reported by SIG AIAD: free-flow architecture design fell into a ~30min
+  # loop of repeated "final validation/signoff" attempts. The gate must be
+  # evaluated once per design and not re-opened after the user responds.
+  - id: threat-modeling-gate-single-pass
+    text: >-
+      Load the bmad-agent-architect skill. If the user has already
+      responded to the threat-modeling conversational gate earlier in this
+      session, should the agent re-open it or ask again?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains_ignore_case
+        value: "not re-open"
+
+  # ── Routing: product scalability assessment ───────────────────
+  - id: route-scalability-assessment
+    text: >-
+      Load the bmad-agent-architect skill, then use the applicable specialist skill
+      to assess whether OneFF is ready to scale to more countries. List every
+      evidence source required by that assessment.
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 2
+      - type: response_contains
+        value: "QuAPI"
+
+  # ── SIG Delivery repository recommendation ──────────────────
+  - id: sig-delivery-repository-recommendation
+    text: >-
+      Load the bmad-agent-architect skill. Review the topology for a broad new
+      full-stack product. How should you state the SIG Delivery recommendation
+      about monorepos, frameworks, frontend, and backend?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains_ignore_case
+        value: "monorepo"
+      - type: response_contains_ignore_case
+        value: "single"
+      - type: response_contains_ignore_case
+        value: "framework"
+      - type: response_contains_ignore_case
+        value: "frontend"
+      - type: response_contains_ignore_case
+        value: "backend"
+
+  # ── Justified alternatives remain acceptable ────────────────
+  - id: justified-repository-alternative
+    text: >-
+      Load the bmad-agent-architect skill. The team proposes repository names
+      that do not use the preferred -front and -back suffixes, with a sound
+      ownership and lifecycle rationale. Is that a blocking architecture
+      failure?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains_ignore_case
+        value: "non-blocking"
+      - type: response_contains_ignore_case
+        value: "document"

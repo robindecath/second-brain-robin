@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blast Radius — {{INCIDENT_TARGET}}</title>
+    <script src="https://unpkg.com/cytoscape@3.31.0/dist/cytoscape.min.js"></script>
+    <script src="https://unpkg.com/layout-base@2.0.1/layout-base.js"></script>
+    <script src="https://unpkg.com/cose-base@2.2.0/cose-base.js"></script>
+    <script src="https://unpkg.com/cytoscape-fcose@2.2.0/cytoscape-fcose.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #111;
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ─── TOOLBAR ─── */
+        #toolbar {
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 7px 14px;
+            background: rgba(10, 10, 20, 0.98);
+            border-bottom: 1px solid #1e2a4a;
+            z-index: 20;
+        }
+        .tb-brand {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+        .tb-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #fff;
+            white-space: nowrap;
+        }
+        .tb-sep { color: #4a5568; }
+        .tb-target {
+            font-size: 13px;
+            font-weight: 600;
+            color: #fbbf24;
+            white-space: nowrap;
+        }
+        .tb-scope {
+            font-size: 10px;
+            color: #4a5568;
+            white-space: nowrap;
+        }
+        .tb-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            flex: 1;
+            justify-content: center;
+        }
+        .severity-badge {
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            flex-shrink: 0;
+        }
+        .severity-critical { background: #742a2a; color: #fc8181;  border: 1px solid #e53e3e; }
+        .severity-high     { background: #7b341e; color: #fbd38d;  border: 1px solid #dd6b20; }
+        .severity-medium   { background: #744210; color: #fefcbf;  border: 1px solid #d69e2e; }
+        .severity-low      { background: #1c4532; color: #9ae6b4;  border: 1px solid #38a169; }
+
+        button {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            font-size: 11px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+        .btn-neutral { background: #2d3748; color: #cbd5e0; border: 1px solid #4a5568; }
+        .btn-neutral:hover { background: #3a4a5e; color: #fff; }
+        .btn-active  { background: #2b6cb0; color: #fff;    border: 1px solid #3182ce; }
+
+        /* ─── GRAPH ZONE ─── */
+        #graph-zone {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            min-height: 0;
+        }
+        #cy {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at center, #1c1c2e 0%, #111 100%);
+        }
+
+        /* Legend — bottom-left of graph */
+        .legend {
+            position: absolute;
+            bottom: 10px;
+            left: 12px;
+            z-index: 10;
+            background: rgba(15, 15, 25, 0.88);
+            padding: 7px 12px;
+            border-radius: 8px;
+            border: 1px solid #2d2d4e;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            font-size: 10px;
+            flex-wrap: wrap;
+            backdrop-filter: blur(8px);
+        }
+        .legend-item { display: flex; align-items: center; gap: 4px; color: #9ca3af; }
+        .legend-dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            flex-shrink: 0;
+        }
+        .legend-dot.incident { background: #ffd700; border-color: #e53e3e; }
+        .legend-dot.impacted  { background: #e07b39; border-color: #fbbf24; }
+        .legend-dot.normal    { background: #3a4a6a; border-color: #4a5a7a; opacity: 0.6; }
+        .legend-dot.uj {
+            background: #e53e3e;
+            border-radius: 0;
+            transform: rotate(45deg);
+            border-color: #fc8181;
+        }
+
+        /* ─── BOTTOM PANEL ─── */
+        #impact-panel {
+            flex-shrink: 0;
+            height: 270px;
+            background: #0d0d1a;
+            border-top: 2px solid #1e2a4a;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .panel-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 7px 16px 6px;
+            border-bottom: 1px solid #1e2a4a;
+            flex-shrink: 0;
+        }
+        .panel-title    { font-size: 12px; font-weight: 700; color: #fff; }
+        .panel-subtitle { font-size: 10px; color: #718096; }
+        .panel-header .severity-badge { margin-left: auto; }
+
+        .panel-body {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        /* KPI column */
+        .kpi-column {
+            flex: 0 0 auto;
+            width: 360px;
+            padding: 8px 12px;
+            overflow: hidden;
+        }
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+        }
+        .kpi-card {
+            background: #151525;
+            border: 1px solid #1e2a4a;
+            border-radius: 6px;
+            padding: 7px 8px;
+            min-width: 0;
+        }
+        .kpi-label {
+            font-size: 9px;
+            color: #718096;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .kpi-value { font-size: 19px; font-weight: 800; line-height: 1.15; }
+        .kpi-value.red    { color: #fc8181; }
+        .kpi-value.orange { color: #fbd38d; }
+        .kpi-value.blue   { color: #90cdf4; }
+        .kpi-value.green  { color: #9ae6b4; }
+        .kpi-value.white  { color: #e2e8f0; }
+
+        /* Products + UJs column */
+        .products-column {
+            flex: 1;
+            min-width: 0;
+            padding: 8px 12px;
+            border-left: 1px solid #1e2a4a;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .col-title {
+            font-size: 10px;
+            font-weight: 600;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 4px;
+            flex-shrink: 0;
+        }
+        .product-list, .uj-list {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .product-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            color: #e2e8f0;
+            padding: 3px 6px;
+            border-radius: 4px;
+            background: #151525;
+        }
+        .uj-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            color: #fca5a5;
+            padding: 3px 6px;
+            border-radius: 4px;
+            background: #1a1022;
+            border-left: 2px solid #e53e3e;
+        }
+        .tier-badge {
+            font-size: 9px; font-weight: 700;
+            padding: 1px 4px; border-radius: 3px; flex-shrink: 0;
+        }
+        .tier-1 { background: #2c5282; color: #90cdf4; }
+        .tier-2 { background: #22543d; color: #9ae6b4; }
+        .tier-3 { background: #2d3748; color: #a0aec0; }
+        .crit-badge {
+            font-size: 9px; font-weight: 700;
+            padding: 1px 4px; border-radius: 3px; flex-shrink: 0;
+            background: #742a2a; color: #fc8181;
+        }
+        .item-domain { color: #718096; font-size: 10px; margin-left: auto; flex-shrink: 0; white-space: nowrap; }
+        .list-more { font-size: 10px; color: #718096; padding: 3px 6px; }
+
+        /* Domains column */
+        .domains-column {
+            flex: 0 0 160px;
+            padding: 8px 12px;
+            border-left: 1px solid #1e2a4a;
+            overflow-y: auto;
+        }
+        .domain-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 4px;
+            font-size: 11px;
+            color: #e2e8f0;
+            padding: 3px 6px;
+            border-radius: 4px;
+            background: #151525;
+            margin-bottom: 2px;
+        }
+        .domain-name {
+            flex: 1; min-width: 0;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .domain-count {
+            font-size: 10px; font-weight: 700; color: #fbd38d;
+            background: #2d3748; padding: 1px 5px; border-radius: 8px; flex-shrink: 0;
+        }
+
+        /* ─── RESPONSIVE ─── */
+        @media (max-width: 900px) {
+            .domains-column { display: none; }
+            .kpi-column { width: 290px; }
+            .kpi-value  { font-size: 16px; }
+        }
+        @media (max-width: 640px) {
+            .panel-body { flex-direction: column; overflow-y: auto; }
+            .kpi-column { width: 100%; flex: 0 0 auto; }
+            .kpi-grid   { grid-template-columns: repeat(3, 1fr); }
+            .products-column { border-left: none; border-top: 1px solid #1e2a4a; min-height: 80px; }
+            #impact-panel { height: auto; max-height: 55vh; }
+        }
+
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #2d3748; border-radius: 2px; }
+    </style>
+</head>
+<body>
+
+<!-- ═══ TOOLBAR ═══ -->
+<div id="toolbar">
+    <div class="tb-brand">
+        <span class="tb-title">🔥 Blast Radius</span>
+        <span class="tb-sep">—</span>
+        <span class="tb-target">{{INCIDENT_TARGET}}</span>
+        <span class="tb-scope">{{SCOPE}}</span>
+    </div>
+    <div class="tb-buttons">
+        <button id="btn-fit"        class="btn-neutral" onclick="cy.fit()">🔄 Fit</button>
+        <button id="btn-focus"      class="btn-neutral" onclick="focusImpact()">🎯 Focus</button>
+        <button id="btn-blast-only" class="btn-neutral" onclick="toggleBlastOnly()">💥 Blast Only</button>
+        <button id="btn-external"   class="btn-neutral" onclick="toggleExternalConsumers()">🔗 External</button>
+        <button id="btn-ujs"        class="btn-neutral" onclick="toggleUserJourneys()">💔 UJs</button>
+        <button id="btn-labels"     class="btn-neutral" onclick="toggleLabels()">🏷️ Labels</button>
+    </div>
+    <div class="severity-badge severity-{{SEVERITY_CSS}}">{{SEVERITY_LEVEL}}</div>
+</div>
+
+<!-- ═══ GRAPH ZONE ═══ -->
+<div id="graph-zone">
+    <div id="cy"></div>
+    <div class="legend">
+        <div class="legend-item"><div class="legend-dot incident"></div> Failing</div>
+        <div class="legend-item"><div class="legend-dot impacted"></div> Impacted</div>
+        <div class="legend-item"><div class="legend-dot normal"></div> Unaffected</div>
+        <div class="legend-item"><div class="legend-dot uj"></div> User Journey</div>
+    </div>
+</div>
+
+<!-- ═══ BOTTOM PANEL ═══ -->
+<div id="impact-panel">
+    <div class="panel-header">
+        <div>
+            <div class="panel-title">💥 {{INCIDENT_TARGET}} — Blast Radius Impact</div>
+            <div class="panel-subtitle">{{SCOPE}}</div>
+        </div>
+        <div class="severity-badge severity-{{SEVERITY_CSS}}">{{SEVERITY_LEVEL}}</div>
+    </div>
+
+    <div class="panel-body">
+        <!-- KPI Cards -->
+        <div class="kpi-column">
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-label">🔴 Failing</div>
+                    <div class="kpi-value red">{{FAILING_COUNT}}</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">🟠 Products</div>
+                    <div class="kpi-value orange">{{IMPACTED_PRODUCTS}}</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">⚠️ Tier-1</div>
+                    <div class="kpi-value red">{{TIER1_COUNT}}</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">💔 User Journeys</div>
+                    <div class="kpi-value orange">{{UJ_COUNT}}</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">🚨 Crit-1 UJs</div>
+                    <div class="kpi-value red">{{CRIT1_COUNT}}</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">🌐 Domains</div>
+                    <div class="kpi-value blue">{{DOMAINS_COUNT}}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Products + User Journeys column -->
+        <div class="products-column">
+            <div class="col-title">Impacted Products</div>
+            <div class="product-list" id="product-list"></div>
+            <div class="col-title" id="uj-section-title" style="margin-top:8px;">💔 Impacted User Journeys</div>
+            <div class="uj-list" id="uj-list"></div>
+        </div>
+
+        <!-- Domains column (hidden at <900 px) -->
+        <div class="domains-column">
+            <div class="col-title">Domains Affected</div>
+            <div id="domain-list"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ─── Data injected by blast_radius.py ───────────────────────────────────
+    const graphData        = {{GRAPH_DATA_JSON}};
+    const impactedProducts = {{IMPACTED_PRODUCTS_JSON}};
+    const impactedUJs      = {{IMPACTED_UJS_JSON}};
+
+    // ─── Populate bottom panel ───────────────────────────────────────────────
+    (function buildPanel() {
+        const abbr = s => (s || '')
+            .replace('BUSINESS CAPABILITY PLATFORM', 'BCP')
+            .replace('ECOMMERCE', 'ECOM')
+            .replace('VALUE CHAIN', 'V-CHAIN')
+            .replace('CUSTOMER RELATIONSHIP', 'CRM')
+            .substring(0, 12);
+
+        // Products list — Tier-1 first
+        const sorted = [...impactedProducts].sort((a, b) => (a.tiering || 9) - (b.tiering || 9));
+        const prodList = document.getElementById('product-list');
+        sorted.slice(0, 18).forEach(p => {
+            const tier = p.tiering || '?';
+            const tc = tier === 1 ? 'tier-1' : tier === 2 ? 'tier-2' : 'tier-3';
+            const el = document.createElement('div');
+            el.className = 'product-item';
+            el.innerHTML = `<span class="tier-badge ${tc}">T${tier}</span>${p.name}<span class="item-domain">${abbr(p.domain)}</span>`;
+            prodList.appendChild(el);
+        });
+        if (sorted.length > 18) {
+            const m = document.createElement('div');
+            m.className = 'list-more';
+            m.textContent = `+ ${sorted.length - 18} more products`;
+            prodList.appendChild(m);
+        }
+
+        // User Journeys list
+        const ujList  = document.getElementById('uj-list');
+        const ujTitle = document.getElementById('uj-section-title');
+        if (impactedUJs.length === 0) {
+            ujTitle.style.display = 'none';
+        } else {
+            const ujSorted = [...impactedUJs].sort((a, b) => (a.criticality || 9) - (b.criticality || 9));
+            ujSorted.slice(0, 10).forEach(uj => {
+                const el = document.createElement('div');
+                el.className = 'uj-item';
+                const crit = uj.criticality === 1 ? '<span class="crit-badge">CRIT</span>' : '';
+                el.innerHTML = `${crit}${uj.name}`;
+                ujList.appendChild(el);
+            });
+            if (ujSorted.length > 10) {
+                const m = document.createElement('div');
+                m.className = 'list-more';
+                m.textContent = `+ ${ujSorted.length - 10} more UJs`;
+                ujList.appendChild(m);
+            }
+        }
+
+        // Domain breakdown
+        const domainMap = {};
+        impactedProducts.forEach(p => {
+            const d = p.domain || 'Unknown';
+            domainMap[d] = (domainMap[d] || 0) + 1;
+        });
+        const domList = document.getElementById('domain-list');
+        Object.entries(domainMap).sort((a, b) => b[1] - a[1]).forEach(([d, count]) => {
+            const el = document.createElement('div');
+            el.className = 'domain-item';
+            el.innerHTML = `<span class="domain-name" title="${d}">${abbr(d)}</span><span class="domain-count">${count}</span>`;
+            domList.appendChild(el);
+        });
+    })();
+
+    // ─── Cytoscape ───────────────────────────────────────────────────────────
+    let showExternalConsumers = true;
+    let showUserJourneys      = true;
+    let showLabels            = true;
+    let blastOnlyActive       = false;
+
+    const cy = cytoscape({
+        container: document.getElementById('cy'),
+        elements: graphData,
+        style: [
+            {
+                selector: 'node',
+                style: {
+                    'label': 'data(label)',
+                    'text-valign': 'center',
+                    'text-halign': 'center',
+                    'font-size': '9px',
+                    'color': '#cbd5e0',
+                    'text-outline-color': '#0a0a14',
+                    'text-outline-width': 2,
+                    'width': 'data(size)',
+                    'height': 'data(size)',
+                    'background-color': '#2a3a5a',
+                    'border-width': 1,
+                    'border-color': '#3a4a6a',
+                    'opacity': 0.38
+                }
+            },
+            {
+                selector: 'node[?impacted]',
+                style: {
+                    'background-color': '#d97706',
+                    'border-color': '#fbbf24',
+                    'border-width': 3,
+                    'color': '#fff',
+                    'font-size': '10px',
+                    'opacity': 1
+                }
+            },
+            {
+                selector: 'node[?incident]',
+                style: {
+                    'background-color': '#ffd700',
+                    'border-color': '#e53e3e',
+                    'border-width': 6,
+                    'color': '#1a1a1a',
+                    'text-outline-color': '#ffd700',
+                    'text-outline-width': 3,
+                    'font-size': '12px',
+                    'font-weight': 'bold',
+                    'width': 52,
+                    'height': 52,
+                    'opacity': 1,
+                    'z-index': 999
+                }
+            },
+            {
+                selector: 'node[group="user_journey"]',
+                style: {
+                    'shape': 'diamond',
+                    'background-color': '#c53030',
+                    'border-color': '#fc8181',
+                    'border-width': 2,
+                    'opacity': 0.38
+                }
+            },
+            {
+                selector: 'node[group="user_journey"][?impacted]',
+                style: {
+                    'background-color': '#e53e3e',
+                    'border-color': '#fc8181',
+                    'border-width': 3,
+                    'opacity': 1
+                }
+            },
+            {
+                selector: 'node[group="org"], node[group="domain"], node[group="subdomain"]',
+                style: { 'opacity': 0.18, 'font-size': '8px' }
+            },
+            {
+                selector: 'edge',
+                style: {
+                    'width': 1,
+                    'line-color': '#2a3a5a',
+                    'target-arrow-color': '#2a3a5a',
+                    'target-arrow-shape': 'triangle',
+                    'curve-style': 'bezier',
+                    'opacity': 0.25
+                }
+            },
+            {
+                selector: 'edge[type="consumes"]',
+                style: {
+                    'line-color': '#2b6cb0',
+                    'target-arrow-color': '#2b6cb0',
+                    'opacity': 0.35
+                }
+            },
+            {
+                selector: 'edge[type="moment_dependency"]',
+                style: {
+                    'line-color': '#e53e3e',
+                    'target-arrow-color': '#e53e3e',
+                    'line-style': 'dashed',
+                    'opacity': 0.45
+                }
+            }
+        ],
+        layout: {
+            name: 'fcose',
+            quality: 'proof',
+            randomize: true,
+            animate: true,
+            animationDuration: 1000,
+            nodeSeparation: 200,
+            nodeRepulsion: 15000,
+            idealEdgeLength: 150,
+            edgeElasticity: 0.45,
+            nestingFactor: 0.1,
+            gravity: 0.1,
+            numIter: 5000,
+            tile: true,
+            tilingPaddingVertical: 50,
+            tilingPaddingHorizontal: 50,
+            gravityRangeCompound: 1.5,
+            gravityCompound: 1.0,
+            gravityRange: 3.8,
+            initialEnergyOnIncremental: 0.3
+        }
+    });
+
+    // Pulsing incident node border
+    (function pulseIncident() {
+        const inc = cy.nodes('[?incident]');
+        if (!inc.length) return;
+        let growing = true;
+        setInterval(() => {
+            inc.style({ 'border-width': growing ? 8 : 6 });
+            growing = !growing;
+        }, 700);
+    })();
+
+    // Highlight edges between impacted nodes
+    cy.ready(function () {
+        cy.edges().forEach(e => {
+            const si = e.source().data('impacted') || e.source().data('incident');
+            const ti = e.target().data('impacted') || e.target().data('incident');
+            if (si && ti) e.style({ 'opacity': 0.85, 'width': 2 });
+        });
+        cy.fit();
+    });
+
+    // ─── Controls ────────────────────────────────────────────────────────────
+    function focusImpact() {
+        const nodes = cy.nodes('[?incident], [?impacted]');
+        if (nodes.length > 0) cy.fit(nodes, 80);
+    }
+
+    function toggleBlastOnly() {
+        blastOnlyActive = !blastOnlyActive;
+        const btn = document.getElementById('btn-blast-only');
+        if (blastOnlyActive) {
+            cy.nodes('[!incident][!impacted]').style('display', 'none');
+            cy.edges().style('display', e =>
+                (e.source().visible() && e.target().visible()) ? 'element' : 'none');
+            const blast = cy.nodes('[?incident], [?impacted]').filter(':visible');
+            if (blast.length) cy.fit(blast, 80);
+            btn.className = 'btn-active';
+        } else {
+            cy.nodes().style('display', 'element');
+            if (!showExternalConsumers) cy.nodes('[?external_consumer]').style('display', 'none');
+            if (!showUserJourneys)      cy.nodes('[group="user_journey"]').style('display', 'none');
+            cy.edges().style('display', e =>
+                (e.source().visible() && e.target().visible()) ? 'element' : 'none');
+            cy.fit();
+            btn.className = 'btn-neutral';
+        }
+    }
+
+    function toggleExternalConsumers() {
+        showExternalConsumers = !showExternalConsumers;
+        cy.nodes('[?external_consumer]').style('display', showExternalConsumers ? 'element' : 'none');
+        cy.edges().style('display', e =>
+            (e.source().visible() && e.target().visible()) ? 'element' : 'none');
+        document.getElementById('btn-external').className =
+            showExternalConsumers ? 'btn-neutral' : 'btn-active';
+    }
+
+    function toggleUserJourneys() {
+        showUserJourneys = !showUserJourneys;
+        cy.nodes('[group="user_journey"]').style('display', showUserJourneys ? 'element' : 'none');
+        cy.edges().style('display', e =>
+            (e.source().visible() && e.target().visible()) ? 'element' : 'none');
+        document.getElementById('btn-ujs').className =
+            showUserJourneys ? 'btn-neutral' : 'btn-active';
+    }
+
+    function toggleLabels() {
+        showLabels = !showLabels;
+        cy.style().selector('node').style('label', showLabels ? 'data(label)' : '').update();
+        document.getElementById('btn-labels').className = showLabels ? 'btn-neutral' : 'btn-active';
+    }
+</script>
+</body>
+</html>

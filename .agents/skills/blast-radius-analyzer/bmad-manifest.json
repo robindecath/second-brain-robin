@@ -1,0 +1,35 @@
+{
+  "name": "blast-radius-analyzer",
+  "version": "1.0.0",
+  "description": "Performs incident impact analysis on Decathlon's digital asset topology by simulating a product/component failure and identifying all downstream technical impacts (products, components) and customer-facing impacts (User Journeys). Use when user asks about blast radius, incident impact, what breaks if product X fails, or dependency analysis.",
+  "location": "project",
+  "keywords": [
+    "blast radius",
+    "incident impact",
+    "dependency analysis",
+    "failure analysis",
+    "risk assessment",
+    "impact analysis",
+    "downstream impact",
+    "user journey impact"
+  ],
+  "trigger_patterns": [
+    "blast radius",
+    "if .+ fails",
+    "what breaks",
+    "impact analysis",
+    "incident impact",
+    "downstream impact",
+    "what depends on"
+  ],
+  "dependencies": [
+    "decathlon-api-tool",
+    "knowledge-graph-query",
+    "delivery-metrics"
+  ],
+  "outputs": {
+    "html_visualization": "/tmp/blast-radius-*.html",
+    "json_report": "/tmp/blast-radius-*.json",
+    "console_summary": "text"
+  }
+}

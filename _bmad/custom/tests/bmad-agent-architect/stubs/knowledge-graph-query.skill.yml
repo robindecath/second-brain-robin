@@ -1,0 +1,16 @@
+name: knowledge-graph-query
+description: "Query AppReferential — Decathlon's authoritative digital asset registry — for products, components, clusters, teams, stacks, SLOs, and documentation links."
+instructions: |
+  Query the AppReferential knowledge graph to look up Decathlon digital assets.
+
+  Supported query patterns:
+  - Single named asset: asset(name: "...")
+  - Domain assets: assets(filter: {metadataFilter: {governance: {domain: "X"}}})
+  - Namespace assets: assets(filter: {metadataFilter: {deployment: {namespace: "X"}}})
+  - Asset count: assetCount(filter: ...)
+
+  Each asset contains: name, kind, tiering (Tier-1 = business-critical), stack details,
+  orgRefs (team ownership, contacts), SLOs, deployment info, and links (documentation, repository).
+
+  Always query AppReferential before making assumptions about any named Decathlon product,
+  component, API, or service.

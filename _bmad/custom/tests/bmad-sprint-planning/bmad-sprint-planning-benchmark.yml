@@ -1,0 +1,168 @@
+# Benchmark: bmad-sprint-planning workflow
+#
+# BMAD-METHOD 6.11.0 removed bmad-check-implementation-readiness and folded it
+# into this skill, which now opens with a PASS / CONCERNS / FAIL readiness gate.
+# The readiness cases below were migrated from the retired
+# tests/bmad-check-implementation-readiness benchmark.
+project: bmad-sprint-planning
+model: copilot/claude-haiku-4.5
+
+# ── Pre-activate hook ─────────────────────────────────────────
+pre_activate:
+  command: >-
+    uv run ${PROJECT_ROOT:-.}/_bmad/scripts/resolve_customization.py
+    --skill ${SPRINT_WORKFLOW_SKILL_DIR:-./.agents/skills/bmad-sprint-planning}
+    --key workflow
+  var: resolved_agent
+
+system_prompt: >-
+  {resolved_agent}
+
+  You are an AI agent helping with sprint planning and prioritization.
+  You have access to specialized skills for story prioritization and validation.
+
+skills:
+  - name: bmad-sprint-planning-workflow
+    path: ${SPRINT_WORKFLOW_SKILL_DIR:-./.agents/skills/bmad-sprint-planning}/SKILL.md
+
+sub_skills:
+  - name: delivery-metrics
+    path: ./tests/bmad-sprint-planning/stubs/delivery-metrics.skill.yml
+  - name: knowledge-graph-query
+    path: ./tests/bmad-sprint-planning/stubs/knowledge-graph-query.skill.yml
+  - name: slo-generator
+    path: ./tests/bmad-sprint-planning/stubs/slo-generator.skill.yml
+  - name: decathlon-tech-compliance
+    path: ./tests/bmad-sprint-planning/stubs/decathlon-tech-compliance.skill.yml
+
+prompts:
+  - id: persistent-slo-health
+    text: >-
+      Load the sprint-planning workflow. How should SLO health factor
+      into story prioritization?
+    asserts:
+      - type: response_contains_ignore_case
+        value: "SLO"
+
+  - id: persistent-app-referential-discovery
+    text: >-
+      Load the sprint-planning workflow. When stories involve Decathlon API
+      integrations, what discovery task should be included?
+    asserts:
+      - type: response_contains
+        value: "AppReferential"
+
+  - id: external-source-delivery-metrics
+    text: >-
+      Load the sprint-planning workflow. To surface UJ SLO performance gaps,
+      which external source should be consulted?
+    asserts:
+      - type: response_contains
+        value: "delivery-metrics"
+
+  - id: external-source-asset-kg
+    text: >-
+      Load the sprint-planning workflow. When a story involves a named
+      Decathlon product, what information should be retrieved?
+    asserts:
+      - type: response_contains
+        value: "knowledge-graph-query"
+
+  # ── Threat model gate ─────────────────────────────────────────
+  - id: threat-model-required-input
+    text: >-
+      Load the sprint-planning workflow. When must the threat model be
+      loaded, and what should happen if it is missing?
+    asserts:
+      - type: response_contains
+        value: "_specs/threat-model.md"
+      - type: response_contains
+        value: "cybersecurity-threat-modeling"
+
+  - id: p0-risk-no-silent-drop
+    text: >-
+      Load the sprint-planning workflow. Can a P0 risk be removed from
+      the sprint backlog without any action?
+    asserts:
+      - type: response_contains_ignore_case
+        value: "risk acceptance"
+      - type: response_contains_ignore_case
+        value: "P0"
+
+  - id: p1-risk-sprint-commitment
+    text: >-
+      Load the sprint-planning workflow. What is the sprint-planning rule
+      for unresolved P1 risks from the threat model?
+    asserts:
+      - type: response_contains_ignore_case
+        value: "P1"
+      - type: response_contains_ignore_case
+        value: "sprint"
+
+  # ── Readiness gate (migrated from bmad-check-implementation-readiness) ──
+  - id: readiness-slo-definitions
+    text: >-
+      Load the sprint-planning workflow. What SLO check runs before the
+      readiness verdict, and what happens if SLO definitions are missing
+      for product-facing endpoints?
+    asserts:
+      - type: response_contains
+        value: "slo-generator"
+      - type: response_contains_ignore_case
+        value: "blocker"
+
+  - id: readiness-app-referential-registration
+    text: >-
+      Load the sprint-planning workflow. What must be verified in
+      AppReferential before implementation is considered ready?
+    asserts:
+      - type: response_contains
+        value: "knowledge-graph-query"
+      - type: response_contains_ignore_case
+        value: "tiering"
+
+  - id: readiness-criteria-checklist
+    text: >-
+      Load the sprint-planning workflow. List everything that must be true
+      before an implementation is ready for delivery.
+    asserts:
+      - type: response_contains
+        value: "FedID"
+      - type: response_contains
+        value: "Datadog"
+      - type: response_contains_ignore_case
+        value: "Tech Radar"
+
+  - id: readiness-tier1-blast-radius
+    text: >-
+      Load the sprint-planning workflow. For Tier-1 products, what additional
+      analysis is recommended before go-live?
+    asserts:
+      - type: response_contains
+        value: "blast-radius-analyzer"
+
+  - id: readiness-on-complete-uj-metrics
+    text: >-
+      Load the sprint-planning workflow. What happens once the sprint plan
+      is complete, regarding User Journey performance?
+    asserts:
+      - type: response_contains
+        value: "delivery-metrics"
+      - type: response_contains_ignore_case
+        value: "breach"
+
+  # ── Regression guard: readiness gate must be single-pass (no loop) ──
+  # Reported by SIG AIAD: repeated "final validation/signoff" looping for
+  # ~30 minutes. FAIL/CONCERNS must be valid terminal outcomes, not a
+  # trigger to keep re-running the gate.
+  - id: readiness-gate-single-pass-no-loop
+    text: >-
+      Load the sprint-planning workflow. If the readiness gate finds gaps
+      and returns a FAIL or CONCERNS verdict, should the agent keep
+      re-running the readiness check to try to reach PASS, or report the
+      verdict and stop?
+    asserts:
+      - type: response_contains_ignore_case
+        value: "once"
+      - type: response_contains_ignore_case
+        value: "stop"

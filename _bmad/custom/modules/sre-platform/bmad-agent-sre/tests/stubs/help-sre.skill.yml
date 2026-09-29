@@ -1,0 +1,9 @@
+name: help-sre
+description: "Embeds SRE practices into new products and services: SLO definition, golden-signal monitoring, toil automation, chaos engineering, and BMAD reliability elaboration."
+instructions: |
+  Guide the user through embedding reliability into a new or existing product.
+  Follow the structured approach: assess reliability needs, define SLOs with
+  quantitative targets, verify alignment with user expectations, implement
+  monitoring for golden signals (latency, traffic, errors, saturation),
+  automate identified toil, and test resilience via chaos engineering.
+  Always start by asking which product or service needs reliability setup.

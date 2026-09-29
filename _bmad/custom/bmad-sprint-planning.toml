@@ -1,0 +1,51 @@
+# Team overrides for bmad-sprint-planning — Sprint planning workflow
+# Merged on top of _bmad/bmm/skills/bmad-sprint-planning/customize.toml
+# Scalar values override defaults; arrays append to defaults.
+#
+# BMAD-METHOD 6.11.0: bmad-check-implementation-readiness was removed and folded
+# into this skill, which now opens with a PASS / CONCERNS / FAIL readiness gate
+# (references/readiness-gate.md) before it generates any sprint tracking. The
+# Decathlon readiness criteria previously carried by
+# `_bmad/custom/bmad-check-implementation-readiness.toml` therefore live here now.
+
+[workflow]
+
+# Decathlon readiness inputs. These run after the greeting and before the
+# workflow starts, so their findings are available to the readiness gate and
+# feed directly into its PASS / CONCERNS / FAIL verdict.
+activation_steps_append = [
+  "For a qualifying new system or change to data flow, identity, access, external integrations, or trust boundaries, load `_specs/threat-model.md`, `_specs/security-requirements.md`, and `_specs/security-verification-checklist.md` as required readiness inputs; skip this requirement and do not invoke `cybersecurity-threat-modeling` for routine operational/non-design work with no such change.",
+  "Invoke `slo-generator` to check whether SLI/SLO YAML definitions exist in dktunited/slo-generator for the product being assessed. Missing SLO definitions for product-facing endpoints are a hard readiness blocker — report them as a FAIL finding in the readiness gate verdict.",
+  "Invoke `knowledge-graph-query` to verify the product is registered in AppReferential with: correct domain and sub-domain, business tiering (Tier-1 / Tier-2), team ownership (orgRefs), and observability configuration (Datadog). Missing or incomplete AppReferential registration is a readiness gap — report it in the readiness gate verdict.",
+  "If the product exposes or consumes internal capabilities without a documented API/endpoint, invoke `decathlon-api-discovery` to confirm whether an existing Decathlon API already covers it — an undocumented, rediscoverable API is a readiness gap.",
+]
+
+persistent_facts = [
+  "Sprint planning at Decathlon should account for SLO health: stories that address SLO breaches or reliability gaps in impacted User Journeys should be surfaced as candidates for higher prioritization.",
+  "Stories that introduce new Decathlon API integrations should include a discovery task to query AppReferential for the target asset's current state, team ownership, and documentation before estimation.",
+  "For any new system, or a change to data flow, identity, access, external integrations, or trust boundaries (skip pure refactors, docs, dependency-only changes, and routine operational work such as monitoring/alerting configuration): load `_specs/threat-model.md` at sprint start. If missing, surface as a finding and require `cybersecurity-threat-modeling` before backlog commitment. P0 risks (score ≥ 16) cannot be dropped without explicit named risk acceptance; P1 risks (score 9-15) must land in the current or next sprint.",
+  "No application may be deployed while risks remain (P0-P3) in 'open' or 'unresolved' status. Every identified risk must reach one of these terminal states before deployment: (1) Mitigated with verified evidence, (2) Accepted with signed owner record, or (3) Blocked with documented rationale and follow-up plan. This is non-negotiable and is verified in this readiness gate.",
+  "Implementation is NOT ready for delivery without all of the following: (1) SLO definitions for all product-facing endpoints (verify via `slo-generator`); (2) Datadog observability configured — APM, logs, monitors — as per the architecture observability section; (3) AppReferential registration with correct domain, tiering, and team ownership; (4) FedID authentication verified for all authenticated surfaces; (5) Tech Radar compliance confirmed — no HOLD technologies in the delivered codebase. Treat any unmet item as a readiness-gate finding, not a silent pass.",
+  "For Tier-1 products, a blast-radius analysis via `blast-radius-analyzer` is recommended before go-live to identify downstream impact risks on User Journeys and dependent components.",
+  "Readiness must distinguish failure modes instead of collapsing them into a single 'not ready' result: missing-input gap (artifact absent), traceability gap (missing IDs or orphan risk, requirement, or checklist links), evidence gap (a mitigated risk or implemented requirement lacks minimum evidence fields), acceptance gap (an accepted risk lacks a complete application-owner record), and active-risk blocker (a risk remains `open` or `blocked` without implemented mitigation evidence or an explicit acceptance record).",
+  "Use `_specs/threat-model.md` as the source of truth for risk status (`open`, `mitigated`, `accepted`, `blocked`), `_specs/security-requirements.md` as the normative control set, and `_specs/security-verification-checklist.md` as the evidence ledger. All three artifacts must agree by stable IDs or explicit cross-references.",
+  "All risks may be accepted by the application owner. All risks follow the same readiness rules: readiness may pass them only when mitigation evidence exists or an explicit application-owner acceptance record exists. Every mitigation action must be defined for implementation; if a mitigation action cannot be implemented as planned, readiness must ensure the blocker is recorded, alternative or compensating controls are evaluated, and the outcome is either an alternative mitigation, deferred deployment, or explicit residual-risk acceptance. P0 risks on production-grade applications should be reviewed by the team's security officer. Missing rationale, owner, date, review date, or linked evidence is an acceptance gap.",
+  "Run this readiness gate ONCE per sprint-planning invocation. Report the PASS / CONCERNS / FAIL verdict with whatever gaps remain and stop — do not re-run the check repeatedly or keep attempting a 'final signoff' in a loop; a FAIL or CONCERNS verdict is a valid, final outcome that the user acts on.",
+]
+
+# Post-readiness: surface User Journey performance impact and verify risk completion states.
+on_complete = "Invoke `delivery-metrics` to retrieve User Journey performance baselines for any UJs impacted by this delivery. Present the current SLO status and flag any UJs already in breach that could be worsened by the deployment. Then report (once, without re-running the gate) whether all in-scope risks from `_specs/threat-model.md` are in explicit terminal states (mitigated, accepted, or blocked with clear rationale); surface any still open as a finding rather than looping to re-check."
+
+# On-demand sources consulted during sprint planning.
+# NOTE: `external_sources` is not part of bmad-sprint-planning's upstream
+# customization surface (it exists only on bmad-architecture, bmad-prd,
+# bmad-product-brief, bmad-project-context, bmad-ux and bmad-deep-recon).
+# The merge is harmless — resolve_customization.py merges unknown keys and the
+# skill ignores them — but these entries are currently inert. Tracked separately.
+external_sources = [
+  "When the user mentions an external tool or platform — or asks about available MCPs — invoke `decathlon-find-mcp-server`. If the skill is not installed, tell the user to run: `npx skills add dktunited/ai-augmented-sdlc --skill decathlon-find-mcp-server`",
+  "When the user asks about AI Augmented Development at Decathlon — GitHub Copilot usage, billing or quota, the AI Augmented SDLC platform, coding standards, agent skills, MCP servers, trainings, talks or monthly community calls — consult the official documentation via `decathlon-ai-augmented-development-docs`, which reads the versioned `llms-full.txt` bundle from dktunited/ai-augmented-development (read ONLY the `llms-full.txt` files — never the link-only `llms.txt`/`llms-pages.txt` indexes, which point back to the login-gated site). If the skill is not installed, tell the user to run: `npx skills add dktunited/ai-augmented-sdlc --skill decathlon-ai-augmented-development-docs`",
+  "When prioritizing stories, consult `delivery-metrics` to surface current User Journey SLO performance gaps and identify which UJs are in breach. Use this context to elevate reliability-impacting stories in the sprint backlog.",
+  "When a story involves a named Decathlon product or API, consult `knowledge-graph-query` to retrieve ownership, tier, and documentation links — use these to refine estimation and identify dependency risks.",
+  "When a story implies a new integration without naming a specific API/endpoint, consult `decathlon-api-discovery` to check whether an existing API already covers it — this materially changes estimation (integration vs. net-new build).",
+]

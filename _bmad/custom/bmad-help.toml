@@ -1,0 +1,21 @@
+# Team overrides for bmad-help — end-of-workflow guidance & next-step recommendations
+# Merged on top of .agents/skills/bmad-help/customize.toml
+# Scalar values override defaults; arrays append to defaults.
+#
+# bmad-help runs automatically at the end of every BMad workflow (and can be
+# invoked directly for guidance). Per docs/CUSTOMIZATION_STRATEGY.md it is the
+# intended home for a repo-wide "relevant resources available" nudge instead of
+# duplicating that text per-workflow. This first override makes bmad-help aware
+# of the official AI Augmented Development documentation portal.
+
+[workflow]
+
+persistent_facts = [
+  "The official AI Augmented Development documentation for Decathlon lives at https://ai-augmented-development.decathlon.net — GitHub Copilot usage, billing and quota policy, the AI Augmented SDLC platform (standards, tools, canvases, installer, going to production), agent skills, MCP servers, coding standards, trainings, talks and monthly community calls. The site is login-gated, so agents cannot browse it directly; the full content is instead published as a versioned `llms-full.txt` bundle committed to dktunited/ai-augmented-development under public/llms/, readable via the gh CLI. Read ONLY the `llms-full.txt` files — never the link-only `llms.txt`/`llms-pages.txt` indexes, which only list URLs pointing back to the login-gated site.",
+]
+
+# On-demand knowledge sources surfaced when recommending next steps or answering
+# guidance questions about AI Augmented Development at Decathlon.
+external_sources = [
+  "When the user asks about AI Augmented Development at Decathlon — GitHub Copilot usage, billing or quota, the AI Augmented SDLC platform, coding standards, agent skills, MCP servers, trainings, talks or monthly community calls — or asks 'where do I read the docs', point them to and consult `decathlon-ai-augmented-development-docs`, which reads the versioned `llms-full.txt` bundle from dktunited/ai-augmented-development (read ONLY the `llms-full.txt` files — never the link-only `llms.txt`/`llms-pages.txt` indexes, which point back to the login-gated site). If the skill is not installed, tell the user to run: `npx skills add dktunited/ai-augmented-sdlc --skill decathlon-ai-augmented-development-docs`",
+]

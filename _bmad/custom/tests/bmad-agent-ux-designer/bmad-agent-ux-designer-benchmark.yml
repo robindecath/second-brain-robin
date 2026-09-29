@@ -1,0 +1,207 @@
+# Benchmark: bmad-agent-ux-designer (Sally)
+#
+# Validates the UX Designer agent's Decathlon customization:
+# - 3-layer TOML merge (base → team → user)
+# - Persona adoption (Sally, UX Designer)
+# - Mandatory web-ui-development invocation for every mockup (no exceptions)
+# - WCAG 2.2 AA / RGAA accessibility requirements in every design artefact
+# - Vitamin Play design system usage (never custom colors/typography)
+#
+# Lives alongside the override: tests/bmad-agent-ux-designer/
+# Stubs: tests/bmad-agent-ux-designer/stubs/*.skill.yml
+#
+# Run offline (stubs):
+#   benchmark run --config tests/bmad-agent-ux-designer/bmad-agent-ux-designer-benchmark.yml
+#
+# Run against a real bmad project (set env vars):
+#   export PROJECT_ROOT=/path/to/bmadtest4
+#   export UX_AGENT_SKILL_DIR=/path/to/bmadtest4/.agents/skills/bmad-agent-ux-designer
+#   export WEB_UI_PATH=/path/to/bmadtest4/.agents/skills/web-ui-development/SKILL.md
+#   export A11Y_PATH=/path/to/bmadtest4/.agents/skills/web-accessibility-evaluation/SKILL.md
+#
+# Run a single prompt:
+#   benchmark run --config tests/bmad-agent-ux-designer/bmad-agent-ux-designer-benchmark.yml --prompt-id persona
+
+project: bmad-agent-ux-designer
+
+model: copilot/claude-haiku-4.5
+
+# ── Pre-activate hook ─────────────────────────────────────────
+pre_activate:
+  command: >-
+    uv run ${PROJECT_ROOT:-.}/_bmad/scripts/resolve_customization.py
+    --skill ${UX_AGENT_SKILL_DIR:-./.agents/skills/bmad-agent-ux-designer}
+    --key agent
+  var: resolved_agent
+
+system_prompt: >-
+  {resolved_agent}
+
+  You have access to additional tools and skills.
+  Skills provide specialized instructions and workflows for specific tasks.
+  Use the read_skill tool to load a skill when a task matches its description.
+
+# ── Listed (advertised) skills ────────────────────────────────
+skills:
+  - name: bmad-agent-ux-designer
+    path: ${UX_AGENT_SKILL_DIR:-./.agents/skills/bmad-agent-ux-designer}/SKILL.md
+
+# ── Unlisted sub-skills (routing targets) ─────────────────────
+sub_skills:
+  - name: web-ui-development
+    path: ${WEB_UI_PATH:-./tests/bmad-agent-ux-designer/stubs/web-ui-development.skill.yml}
+  - name: web-accessibility-evaluation
+    path: ${A11Y_PATH:-./tests/bmad-agent-ux-designer/stubs/web-accessibility-evaluation.skill.yml}
+  - name: ux-research
+    path: ${UX_RESEARCH_PATH:-./tests/bmad-agent-ux-designer/stubs/ux-research.skill.yml}
+
+prompts:
+  # ── Persona adoption ──────────────────────────────────────────
+  - id: persona
+    text: >-
+      Load the bmad-agent-ux-designer skill. What is the agent's name
+      and title?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "Sally"
+      - type: response_contains
+        value: "UX Designer"
+
+  # ── Mandatory: web-ui-development for every mockup ────────────
+  - id: web-ui-mandatory
+    text: >-
+      Load the bmad-agent-ux-designer skill. Is invoking the
+      web-ui-development skill optional when generating a mockup?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "web-ui-development"
+      - type: response_contains_ignore_case
+        value: "required"
+        # Matches: "required", "mandatory", "must", "not optional"
+
+  # ── Vitamin Play design system ────────────────────────────────
+  - id: vitamin-play
+    text: >-
+      Load the bmad-agent-ux-designer skill. Which design system must
+      be used for all mockups and UI prototypes?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "Vitamin Play"
+
+  # ── WCAG accessibility requirements ───────────────────────────
+  - id: accessibility-required
+    text: >-
+      Load the bmad-agent-ux-designer skill. What accessibility standard
+      must every design artefact comply with?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "WCAG"
+      - type: response_contains_ignore_case
+        value: "accessibility"
+
+  # ── Routing: mockup generation ────────────────────────────────
+  - id: route-mockup
+    text: >-
+      Load the bmad-agent-ux-designer skill. I need to create a checkout
+      screen mockup for a Decathlon web app. Which skill must you invoke?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "web-ui-development"
+
+  # ── No custom CSS colors ──────────────────────────────────────
+  - id: no-custom-styles
+    text: >-
+      Load the bmad-agent-ux-designer skill. Can custom CSS colors or
+      typography be implemented from scratch in a design artefact?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "Vitamin Play"
+
+  # ── Accessibility: validated before mockup complete ──────────
+  - id: accessibility-complete
+    text: >-
+      Load the bmad-agent-ux-designer skill. When is a mockup considered
+      complete with respect to accessibility?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains_ignore_case
+        value: "check"
+        # Matches: "checked", "validated", "verified", "assessed"
+      - type: response_contains
+        value: "WCAG"
+
+  # ── UX research: mandatory ux-research routing ────────────────
+  - id: ux-research-mandatory
+    text: >-
+      Load the bmad-agent-ux-designer skill. I need to run user interviews
+      and build a research plan for a new feature. Which skill must you use?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "ux-research"
+
+  # ── UX research: no alternative methodology ───────────────────
+  - id: ux-research-exclusive
+    text: >-
+      Load the bmad-agent-ux-designer skill. Can you propose your own
+      research methodology or persona template instead of the Decathlon one?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains_ignore_case
+        value: "no"
+        # Matches: "no", "never", "not acceptable"
+      - type: response_contains
+        value: "ux-research"
+
+  # ── UX research: evidence traceability ────────────────────────
+  - id: ux-research-traceability
+    text: >-
+      Load the bmad-agent-ux-designer skill. What must accompany every
+      finding in a research deliverable you hand off?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains_ignore_case
+        value: "citation"
+      - type: response_contains_ignore_case
+        value: "confidence"
+
+  # ── Rendering rule: research deliverable as web artefact ──────
+  - id: research-deliverable-rendering
+    text: >-
+      Load the bmad-agent-ux-designer skill. I want the persona and journey
+      deliverables as a clickable web board rather than markdown. Which skill
+      and design system apply?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "web-ui-development"
+      - type: response_contains
+        value: "Vitamin Play"

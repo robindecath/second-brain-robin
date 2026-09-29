@@ -1,0 +1,202 @@
+# Benchmark: bmad-agent-dev (Amelia)
+#
+# Validates the Developer agent's Decathlon customization:
+# - 3-layer TOML merge (base → team → user)
+# - Persona adoption (Amelia, Senior Software Engineer)
+# - Mandatory Tech Radar and Tech Compliance invocations
+# - AppReferential (KG) routing for named Decathlon assets
+# - FedID skill routing (Next.js, Spring Boot)
+# - Cucumber / Tzatziki routing for BDD tests
+# - Web task flow principles
+#
+# Lives alongside the overrides: tests/bmad-agent-dev/
+# Stubs: tests/bmad-agent-dev/stubs/*.skill.yml
+#
+# Run offline (stubs, no real BMAD install):
+#   benchmark run --config tests/bmad-agent-dev/bmad-agent-dev-benchmark.yml
+#
+# Run against a real bmad project (set env vars):
+#   export PROJECT_ROOT=/path/to/bmadtest4
+#   export DEV_AGENT_SKILL_DIR=/path/to/bmadtest4/.agents/skills/bmad-agent-dev
+#   export TECH_RADAR_PATH=/path/to/bmadtest4/.agents/skills/decathlon-tech-radar/SKILL.md
+#   export TECH_COMPLIANCE_PATH=/path/to/bmadtest4/.agents/skills/decathlon-tech-compliance/SKILL.md
+#   export ASSET_KG_PATH=/path/to/bmadtest4/.agents/skills/knowledge-graph-query/SKILL.md
+#   export WEB_UI_PATH=/path/to/bmadtest4/.agents/skills/web-ui-development/SKILL.md
+#   export FEDID_NEXTJS_PATH=/path/to/bmadtest4/.agents/skills/better-auth-fedid-configuration-nextjs/SKILL.md
+#   export CUCUMBER_PATH=/path/to/bmadtest4/.agents/skills/add-cucumber-tests/SKILL.md
+#   benchmark run --config tests/bmad-agent-dev/bmad-agent-dev-benchmark.yml
+#
+# Run a single prompt:
+#   benchmark run --config tests/bmad-agent-dev/bmad-agent-dev-benchmark.yml --prompt-id persona
+
+project: bmad-agent-dev
+
+model: copilot/claude-haiku-4.5
+
+# ── Pre-activate hook ─────────────────────────────────────────
+# Runs resolve_customization.py to merge the 3 TOML layers before
+# the LLM sees any skill. Its stdout (resolved agent JSON) replaces
+# {resolved_agent} in the system_prompt.
+#
+# Falls back gracefully: if PROJECT_ROOT is unset, the script is skipped
+# and the system_prompt will contain the literal "{resolved_agent}" which
+# the LLM ignores — persona tests then rely on the SKILL.md alone.
+pre_activate:
+  command: >-
+    uv run ${PROJECT_ROOT:-.}/_bmad/scripts/resolve_customization.py
+    --skill ${DEV_AGENT_SKILL_DIR:-./.agents/skills/bmad-agent-dev}
+    --key agent
+  var: resolved_agent
+
+system_prompt: >-
+  {resolved_agent}
+
+  You have access to additional tools and skills.
+  Skills provide specialized instructions and workflows for specific tasks.
+  Use the read_skill tool to load a skill when a task matches its description.
+
+# ── Listed (advertised) skills ────────────────────────────────
+skills:
+  - name: bmad-agent-dev
+    path: ${DEV_AGENT_SKILL_DIR:-./.agents/skills/bmad-agent-dev}/SKILL.md
+
+# ── Unlisted sub-skills (routing targets) ─────────────────────
+sub_skills:
+  - name: decathlon-tech-radar
+    path: ${TECH_RADAR_PATH:-./tests/bmad-agent-dev/stubs/decathlon-tech-radar.skill.yml}
+  - name: decathlon-tech-compliance
+    path: ${TECH_COMPLIANCE_PATH:-./tests/bmad-agent-dev/stubs/decathlon-tech-compliance.skill.yml}
+  - name: knowledge-graph-query
+    path: ${ASSET_KG_PATH:-./tests/bmad-agent-dev/stubs/knowledge-graph-query.skill.yml}
+  - name: web-ui-development
+    path: ${WEB_UI_PATH:-./tests/bmad-agent-dev/stubs/web-ui-development.skill.yml}
+  - name: better-auth-fedid-configuration-nextjs
+    path: ${FEDID_NEXTJS_PATH:-./tests/bmad-agent-dev/stubs/better-auth-fedid-configuration-nextjs.skill.yml}
+  - name: add-cucumber-tests
+    path: ${CUCUMBER_PATH:-./tests/bmad-agent-dev/stubs/add-cucumber-tests.skill.yml}
+
+prompts:
+  # ── Persona adoption ──────────────────────────────────────────
+  - id: persona
+    text: >-
+      Load the bmad-agent-dev skill. What is the agent's name and title?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "Amelia"
+      - type: response_contains
+        value: "Senior Software Engineer"
+
+  # ── Principles: Tech Radar ────────────────────────────────────
+  - id: tech-radar-principle
+    text: >-
+      Load the bmad-agent-dev skill. According to the agent's principles,
+      which skill must always be invoked for development tasks?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "decathlon-tech-radar"
+
+  # ── Principles: Tech Compliance ───────────────────────────────
+  - id: tech-compliance-principle
+    text: >-
+      Load the bmad-agent-dev skill. What skill must be invoked at the
+      start of any development task to verify SIG maturity requirements?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "decathlon-tech-compliance"
+
+  # ── Routing: Tech Radar invocation ────────────────────────────
+  - id: route-tech-radar
+    text: >-
+      Load the bmad-agent-dev skill. I want to use React with Tailwind
+      for a new Decathlon frontend. Which skill should you invoke first?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "decathlon-tech-radar"
+
+  # ── Routing: KG lookup for named Decathlon product ───────────
+  - id: route-knowledge-graph
+    text: >-
+      Load the bmad-agent-dev skill. I need to integrate with the
+      Decathlon checkout-api. Which skill should you invoke first and why?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "knowledge-graph-query"
+
+  # ── Routing: FedID Next.js ────────────────────────────────────
+  - id: route-fedid-nextjs
+    text: >-
+      Load the bmad-agent-dev skill. I need to add FedID authentication
+      to a Next.js project. Which skill handles this?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "better-auth-fedid-configuration-nextjs"
+
+  # ── Routing: BDD tests with Cucumber / Tzatziki ───────────────
+  - id: route-cucumber
+    text: >-
+      Load the bmad-agent-dev skill. I need to write integration tests
+      for a Spring Boot service using BDD. Which skill should I use?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "add-cucumber-tests"
+
+  # ── Principles: KG first for Decathlon assets ────────────────
+  - id: kg-first-principle
+    text: >-
+      Load the bmad-agent-dev skill. What is the correct pattern when
+      a development task references a named Decathlon product or API?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "knowledge-graph-query"
+      - type: response_contains_ignore_case
+        value: "first"
+
+  # ── Web task flow awareness ───────────────────────────────────
+  - id: web-task-flow
+    text: >-
+      Load the bmad-agent-dev skill. When working on web frontend code,
+      in what order must the web skills be invoked?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains
+        value: "web-ui-development"
+      - type: response_contains
+        value: "web-accessibility-evaluation"
+
+  # ── Accessibility is mandatory ────────────────────────────────
+  - id: accessibility-mandatory
+    text: >-
+      Load the bmad-agent-dev skill. Can accessibility be deferred
+      as a nice-to-have after delivery?
+    asserts:
+      - type: tool_called
+        tool: read_skill
+        times_min: 1
+      - type: response_contains_ignore_case
+        value: "mandatory"

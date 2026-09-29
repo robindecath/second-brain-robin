@@ -1,0 +1,106 @@
+# Benchmark: bmad-create-epics-and-stories workflow
+project: bmad-create-epics-and-stories
+model: copilot/claude-haiku-4.5
+
+# ── Pre-activate hook ─────────────────────────────────────────
+pre_activate:
+  command: >-
+    uv run ${PROJECT_ROOT:-.}/_bmad/scripts/resolve_customization.py
+    --skill ${EPICS_WORKFLOW_SKILL_DIR:-./.agents/skills/bmad-create-epics-and-stories}
+    --key workflow
+  var: resolved_agent
+
+system_prompt: >-
+  {resolved_agent}
+
+  You are an AI agent helping to create epics and user stories.
+  You have access to specialized skills for story elaboration.
+
+skills:
+  - name: bmad-create-epics-and-stories-workflow
+    path: ${EPICS_WORKFLOW_SKILL_DIR:-./.agents/skills/bmad-create-epics-and-stories}/SKILL.md
+
+sub_skills:
+  - name: knowledge-graph-query
+    path: ./tests/bmad-create-epics-and-stories/stubs/knowledge-graph-query.skill.yml
+  - name: delivery-metrics
+    path: ./tests/bmad-create-epics-and-stories/stubs/delivery-metrics.skill.yml
+
+prompts:
+  - id: activation-asset-kg
+    text: >-
+      Load the epic and story workflow. When an epic references Decathlon products,
+      what must be invoked?
+    asserts:
+      - type: response_contains
+        value: "knowledge-graph-query"
+
+  - id: persistent-web-accessibility
+    text: >-
+      Load the epic and story workflow. What must web UI stories include
+      in their acceptance criteria?
+    asserts:
+      - type: response_contains_ignore_case
+        value: "WCAG"
+
+  - id: persistent-tech-radar
+    text: >-
+      Load the epic and story workflow. When stories introduce new technologies,
+      what classification must they reference?
+    asserts:
+      - type: response_contains
+        value: "Tech Radar"
+
+  - id: external-source-delivery-metrics
+    text: >-
+      Load the epic and story workflow. When stories touch User Journey performance,
+      which external source should be consulted?
+    asserts:
+      - type: response_contains
+        value: "delivery-metrics"
+
+  # ── Threat model gate ─────────────────────────────────────────
+  - id: threat-model-required-input
+    text: >-
+      Load the epic and story workflow. Which threat-modeling artifacts are
+      required inputs before story creation can begin, and what happens if
+      they are missing?
+    asserts:
+      - type: response_contains
+        value: "_specs/threat-model.md"
+      - type: response_contains
+        value: "_specs/security-requirements.md"
+      - type: response_contains
+        value: "cybersecurity-threat-modeling"
+
+  - id: p0-p1-as-acceptance-criteria
+    text: >-
+      Load the epic and story workflow. How must P0 and P1 security risks
+      from the threat model be reflected in user stories?
+    asserts:
+      - type: response_contains_ignore_case
+        value: "acceptance criteria"
+      - type: response_contains_ignore_case
+        value: "P0"
+      - type: response_contains_ignore_case
+        value: "P1"
+
+  - id: no-separate-security-stories
+    text: >-
+      Load the epic and story workflow. Should security risk mitigations
+      be created as separate standalone stories?
+    asserts:
+      - type: response_contains_ignore_case
+        value: "feature story"
+      - type: response_contains_ignore_case
+        value: "separate security stories"
+
+  - id: security-requirements-in-ac
+    text: >-
+      Load the epic and story workflow. Must stories reference security
+      requirements from the threat model artifacts in their acceptance criteria?
+    asserts:
+      - type: response_contains
+        value: "_specs/security-requirements.md"
+      - type: response_contains_ignore_case
+        value: "acceptance criteria"

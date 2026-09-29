@@ -1,0 +1,113 @@
+# Benchmark: bmad-build workflow (Phase 4 implementation loop)
+#
+# BMAD-METHOD 6.11.0 made bmad-build the single official implementation skill;
+# bmad-dev-story is now a forwarding shim under v6-shims/. This benchmark
+# replaces the former bmad-dev-story benchmark and validates
+# _bmad/custom/bmad-build.toml.
+project: bmad-build
+model: copilot/claude-haiku-4.5
+
+# ── Pre-activate hook ─────────────────────────────────────────
+pre_activate:
+  command: >-
+    uv run ${PROJECT_ROOT:-.}/_bmad/scripts/resolve_customization.py
+    --skill ${BUILD_WORKFLOW_SKILL_DIR:-./.agents/skills/bmad-build}
+    --key workflow
+  var: resolved_agent
+
+system_prompt: >-
+  {resolved_agent}
+
+  You are an AI agent helping developers implement user stories.
+  You have access to specialized skills for story execution and validation.
+
+skills:
+  - name: bmad-build-workflow
+    path: ${BUILD_WORKFLOW_SKILL_DIR:-./.agents/skills/bmad-build}/SKILL.md
+
+sub_skills:
+  - name: decathlon-tech-compliance
+    path: ./tests/bmad-build/stubs/decathlon-tech-compliance.skill.yml
+  - name: knowledge-graph-query
+    path: ./tests/bmad-build/stubs/knowledge-graph-query.skill.yml
+  - name: add-cucumber-tests
+    path: ./tests/bmad-build/stubs/add-cucumber-tests.skill.yml
+
+prompts:
+  - id: activation-skill-discovery
+    text: >-
+      Load the build workflow. What scanning mode is used for skill discovery?
+    asserts:
+      - type: response_contains
+        value: "Quick Context Scan"
+
+  - id: activation-compliance-check
+    text: >-
+      Load the build workflow. What SIG domain verification must happen
+      when starting a story?
+    asserts:
+      - type: response_contains
+        value: "decathlon-tech-compliance"
+
+  - id: persistent-web-task-flow
+    text: >-
+      Load the build workflow. What is the WEB TASK FLOW order
+      for web frontend work?
+    asserts:
+      - type: response_contains
+        value: "web-ui-development"
+
+  - id: on-complete-bdd-tests
+    text: >-
+      Load the build workflow. For Java/Spring projects with Tzatziki,
+      what is generated on story completion?
+    asserts:
+      - type: response_contains
+        value: "add-cucumber-tests"
+
+  - id: activation-asset-kg
+    text: >-
+      Load the build workflow. When the work involves a named Decathlon
+      product, service, or API, what must be loaded before implementing?
+    asserts:
+      - type: response_contains
+        value: "knowledge-graph-query"
+
+  - id: activation-api-discovery
+    text: >-
+      Load the build workflow. If the work implies calling an internal
+      capability without naming a specific API or endpoint, what must happen
+      before writing integration code?
+    asserts:
+      - type: response_contains
+        value: "decathlon-api-discovery"
+
+  - id: persistent-security-requirements
+    text: >-
+      Load the build workflow. Which security artefacts are mandatory
+      completion criteria?
+    asserts:
+      - type: response_contains
+        value: "_specs/security-requirements.md"
+      - type: response_contains
+        value: "_specs/security-verification-checklist.md"
+
+  - id: persistent-tech-radar-hold
+    text: >-
+      Load the build workflow. What happens to a technology classified
+      as HOLD on the Decathlon Tech Radar?
+    asserts:
+      - type: response_contains_ignore_case
+        value: "HOLD"
+      - type: response_contains_ignore_case
+        value: "block"
+
+  - id: review-layer-decathlon-compliance
+    text: >-
+      Load the build workflow. Which review layers run on the diff, and
+      what does the Decathlon-specific one check?
+    asserts:
+      - type: response_contains_ignore_case
+        value: "Decathlon Compliance"
+      - type: response_contains
+        value: "FedID"

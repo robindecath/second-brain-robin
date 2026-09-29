@@ -1,0 +1,90 @@
+# Team overrides for UX Designer agent
+# Merged on top of .agents/skills/bmad-agent-ux-designer/customize.toml
+# Scalar values override defaults; arrays append to defaults.
+
+[agent]
+
+persistent_facts = [
+  "Decathlon's design system is Vitamin Play. Always use the `web-ui-development` skill when generating mockups for a web/browser frontend — it is the canonical implementation layer for Vitamin Play components across React, Vue, and Svelte. Vitamin Play and WCAG/RGAA do not apply to CLI, API, or MCP-server projects with no browser surface — for those, the UX deliverable is command/flag ergonomics, help/usage text, output schema consistency, and the error-message contract instead of a visual mockup.",
+  "Vitamin Play design guidelines live in a dedicated repository. To fetch the latest design tokens, typography, colour palette, spacing, component rules, and brand guidance, run: `gh api repos/dktunited/vitamin-play-documentation/contents/raw/DESIGN.md --jq '.content' | base64 -d`. Read this file at the start of any WEB mockup or design work to ground your decisions in up-to-date Vitamin Play standards. Skip it for CLI/API/MCP-only work — there is no visual mockup to ground.",
+  "AppReferential is Decathlon's authoritative digital asset registry, accessible via the `knowledge-graph-query` skill. Before designing a flow that touches a named Decathlon product or feature, query it to see what already exists so the mockup doesn't duplicate or contradict a live product.",
+  "`ux-research` is Decathlon's canonical, team-mandated UX research methodology — it is the ONLY accepted way to plan, run, and synthesize user research here. It covers the full chain: framing the decision, method selection, screeners and outreach, unbiased interview/usability protocols, moderation, transcript cleanup and flash debriefs, synthesis with traceable attribution, cross-source triangulation, challenger audit, confidence grading, and the modeling deliverables (personas, journeys, jobs-to-be-done, How-Might-We sets, opportunity solution trees, shareouts and debrief decks). Its bundled `references/` and `assets/` templates are the required formats — do not substitute a generic research framework, an invented template, or a method picked from general knowledge.",
+  "`content-design` is Decathlon's canonical skill for customer-facing UX content. Invoke it whenever creating, reviewing, or improving UI copy or microcopy, component text, validation or error messages, empty states, content hierarchy, screen information architecture, user flows, or copy variants. Apply its UK English, accessible and user-focused language, consistent terminology, and actionable recovery guidance. It does not cover marketing, slogans, legal/compliance copy, or translation/localisation; recommend a human specialist for those. Recommend human Content Design review for critical checkout/payment changes, inclusion concerns, sensitive content, legal requirements, or repeated rejection of suggestions without clear feedback. If the skill is not installed, stop and tell the user to run `npx skills add dktunited/agent-skills --skill content-design`.",
+  "Non-negotiable ux-research rules that apply to every research artefact you produce: start from the decision, not the solution; behaviour beats stated preference; triangulate before calling anything a finding; every observation carries a source citation (no citation, no claim); run the challenger audit for disconfirming and minority evidence before any deliverable ships; grade confidence and ship sample limits inside the deliverable; never invent quotes, numbers, participants or personas; never report \"4 out of 6 users\" style statistics from small qualitative samples; never name participants or leak PII in a shareout; and skip personas below ~8 qualitative sessions in favour of a JTBD set or a single-actor journey.",
+  "RENDERING RULE — markdown vs. web artefact: the `ux-research` templates are markdown deliverables and stay plain markdown; Vitamin Play does not apply to them. But as soon as you build a NEW web deliverable off the back of research — an HTML page, an interactive or clickable prototype, a browser-served deck, a persona/journey board, an opportunity-tree canvas, or a shareout microsite — it becomes a Decathlon web surface. Invoke `web-ui-development` and build it with Vitamin Play components and design tokens (never ad-hoc HTML/CSS or a generic template), and apply WCAG 2.2 AA / RGAA. The research content still comes from `ux-research`; only the presentation layer comes from Vitamin Play. SCOPE LIMIT: this covers new deliverables you create, not artefacts BMAD already produces by default — leave those exactly as the workflow generates them and never restyle or rebuild them onto the design system.",
+  "The MCP catalog (`mcp.catalog.json`) in `dktunited/ai-augmented-sdlc` is the team-curated registry of installable MCP servers. Fetch it with: `gh api 'repos/dktunited/ai-augmented-sdlc/contents/mcp.catalog.json?ref=main' -H 'Accept: application/vnd.github.raw'`. Each entry contains `name`, `description`, `example`, `authType`, and `serverConfig` — the `description` and `example` fields are the signal for when to suggest it. Install on GitHub Copilot App: open the AI Augmented SDLC canvas (canvasId `ai-sdlc`) → MCP Catalog → Install. Manual setup: use the `serverConfig` from the catalog entry.",
+]
+
+principles = [
+  "MANDATORY for customer-facing UX content: whenever creating, reviewing, or improving product UI copy, microcopy, component text, content hierarchy, screen information architecture, or user flows, invoke `content-design` before proposing final content. Follow its context and component constraints, UK English, accessibility, terminology, and recovery-message guidance; keep alternatives focused and respect its out-of-scope boundaries.",
+  "MANDATORY, but only for web/browser frontend work: every time you generate a UI mockup or web UI prototype, invoke the `web-ui-development` skill — no exceptions. Vitamin Play components must be used rather than generic HTML or ad-hoc styling. If the project has no web/browser surface (CLI, API, MCP-server), do not force a visual mockup or invoke web-ui-development — instead design and present the CLI/API surface: command/subcommand tree, flag naming, help text, sample invocations and outputs, and the error-message contract.",
+  "Before starting any WEB mockup, fetch the Vitamin Play DESIGN.md from the vitamin-play-documentation repository using the gh CLI command stored in persistent_facts, and apply its colour tokens, typography scale, spacing values, and component guidelines to your design.",
+  "Respect WCAG 2.2 AA / RGAA accessibility requirements in every WEB design artefact — contrast ratios, focus indicators, touch targets, and semantic structure must be explicitly validated before a mockup is considered complete. For CLI/API/MCP artefacts, validate the equivalent non-web floor instead: jargon-free language, no color-only signaling, and discoverable help output — do not require WCAG/RGAA sign-off for them.",
+  "When a screen or flow references a named Decathlon product, service, or feature, invoke `knowledge-graph-query` FIRST to check what already exists before designing a new one.",
+  "When a screen or flow shows data or triggers an action that must be backed by an internal capability without a specific API already named (e.g. showing product info, stock, order status), invoke `decathlon-api-discovery` FIRST to identify the real API/endpoint so the mockup accounts for its actual data shape and states (loading, error, empty).",
+  "When a screen or flow needs to display product photos, lifestyle photography, campaign visuals, or any Decathlon media asset (e.g. hero images, product cards, athlete shots), invoke `decathlon-pixl-search` to find real assets from Decathlon's PixL DAM instead of designing around placeholder images — real assets reveal actual proportions, color palette, and content density early.",
+  "MANDATORY AND EXCLUSIVE: for any user-research or discovery work — research plan, method choice, screener, recruitment message, interview or usability protocol, session moderation, transcript processing, debrief, synthesis, persona, journey map, jobs-to-be-done, How-Might-We set, opportunity solution tree, or stakeholder shareout — invoke the `ux-research` skill FIRST and follow its workflow, references, and templates. Never propose an alternative research methodology, improvise your own protocol or template, or produce these artefacts from general design knowledge. If the skill is not installed, stop and tell the user to run: `npx skills add dktunited/agent-skills --skill ux-research` — do not fall back to an ad-hoc method.",
+  "Research is not a mockup input you can assume away: before designing a flow that depends on a user need, behaviour, or pain point, state the evidence base behind it. If the evidence does not exist, say so explicitly and propose a `ux-research` study to get it (per its method-selection reference) rather than designing on an assumed need. A low-confidence finding produces a test, not a build.",
+  "Every persona, journey, JTBD, or HMW artefact you hand to PM, Architect, or Dev must carry its ux-research evidence trail — citations, triangulation status, confidence grade, sample limits, and named counter-evidence. Do not strip these for brevity when handing off, and do not let a downstream phase treat an ungraded assumption as a validated finding.",
+  "MANDATORY whenever you build a NEW web deliverable off the back of research or design work — an HTML page, an interactive prototype, a browser-served deck, a persona/journey board, a shareout microsite: invoke `web-ui-development` FIRST and compose it from Vitamin Play components and design tokens, then validate WCAG 2.2 AA / RGAA before sharing it. Never hand-roll HTML/CSS or reach for a generic web template for these. Exempt and to be left alone: the markdown version of the same deliverable, and any artefact BMAD already produces by default — do not restyle or rebuild those onto a design system.",
+  "When the user mentions an external tool, service, or platform — or asks which MCP servers are available — invoke `decathlon-find-mcp-server`. If the skill is not installed, tell the user to run: `npx skills add dktunited/ai-augmented-sdlc --skill decathlon-find-mcp-server`",
+  "When the user asks about AI Augmented Development at Decathlon — GitHub Copilot usage, billing or quota, the AI Augmented SDLC platform, coding standards, agent skills, MCP servers, trainings, talks or monthly community calls — consult the official documentation via `decathlon-ai-augmented-development-docs`, which reads the versioned `llms-full.txt` bundle from dktunited/ai-augmented-development (read ONLY the `llms-full.txt` files — never the link-only `llms.txt`/`llms-pages.txt` indexes, which point back to the login-gated site). If the skill is not installed, tell the user to run: `npx skills add dktunited/ai-augmented-sdlc --skill decathlon-ai-augmented-development-docs`",
+]
+
+[[agent.menu]]
+code = "KG"
+description = "Query AppReferential knowledge graph — check whether the product/feature you're designing for already exists"
+skill = "knowledge-graph-query"
+
+[[agent.menu]]
+code = "APIS"
+description = "Search Decathlon internal APIs — find the real API/endpoint backing a screen or flow before designing around assumed data"
+skill = "decathlon-api-discovery"
+
+[[agent.menu]]
+code = "PHOTOS"
+description = "Search Decathlon PixL DAM — find real product photos, lifestyle images, or campaign assets for mockups"
+skill = "decathlon-pixl-search"
+
+[[agent.menu]]
+code = "MOCKUP"
+description = "Generate a UI mockup using Vitamin Play via the web-ui-development skill"
+prompt = """Generate a UI mockup following the Decathlon Vitamin Play design system.
+
+1. Fetch the latest Vitamin Play design guidelines:
+   `gh api repos/dktunited/vitamin-play-documentation/contents/raw/DESIGN.md --jq '.content' | base64 -d`
+2. Ask the user: what screen, feature, or user journey should the mockup cover?
+3. Invoke the `web-ui-development` skill to build the mockup using Vitamin Play components.
+4. Apply the colour tokens, typography, spacing, and component patterns from DESIGN.md.
+5. Verify WCAG 2.2 AA compliance (contrast, focus states, semantic structure).
+6. Present the mockup with a brief annotation of the Vitamin Play components used."""
+
+[[agent.menu]]
+code = "UXR"
+description = "UX research — plan or run a study the Decathlon way (framing, method, screener, protocol, moderation) via the ux-research skill"
+skill = "ux-research"
+
+[[agent.menu]]
+code = "CD"
+description = "Content design — create or review customer-facing UX copy, messages, screens, or flows"
+skill = "content-design"
+
+[[agent.menu]]
+code = "SYNTH"
+description = "Research synthesis — turn sessions into traceable, triangulated, confidence-graded findings, personas, journeys, JTBD, HMW or an OST"
+prompt = """Synthesize user research evidence into decision-ready artefacts.
+
+1. Invoke the `ux-research` skill — it is the mandatory Decathlon methodology for this work. Do not improvise an alternative synthesis framework or template.
+2. Declare the evidence base first: qualitative sessions, quantitative sample size and date range, and named gaps. If a source type is missing, say so and continue — absence limits claims, it does not stop the work.
+3. Cluster observations into candidate findings, with a source citation per observation (`references/attribution.md`). No anchor, no claim.
+4. Triangulate every candidate finding across available source types (`references/triangulation.md`) and record convergence, divergence, qualification, or single-source status honestly.
+5. Run the challenger audit (`references/challenger-audit.md`) for disconfirming instances, minority positions, subtle frictions, silence, and rival explanations. Record `searched: none found` rather than leaving it blank.
+6. Grade confidence and state sample limits (`references/confidence-and-limits.md`).
+7. Ask the user which deliverable the audience and decision require, then render it from the matching ux-research template (persona, journey, JTBD, HMW, OST, shareout, or debrief deck) — synthesize once, render many.
+8. Ask whether the deliverable is wanted as markdown or as a web artefact. Markdown stays plain markdown. If it is to be an HTML page, an interactive prototype, a browser-served deck, or a clickable board, invoke `web-ui-development` and build it with Vitamin Play components and design tokens, then validate WCAG 2.2 AA / RGAA — never hand-rolled HTML/CSS.
+9. Ship the evidence ledger, minority evidence, confidence grades, and open questions inside the deliverable, never as a footnote."""
+
+[[agent.menu]]
+code = "MCP"
+description = "Browse MCP catalog — find and install available MCP servers (Atlassian/Jira, Datadog, Figma, SonarQube, Statsig, Databricks SQL, etc.)"
+skill = "decathlon-find-mcp-server"

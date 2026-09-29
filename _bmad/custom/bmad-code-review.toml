@@ -1,0 +1,32 @@
+# Team overrides for bmad-code-review — Code review workflow
+# Merged on top of .agents/skills/bmad-code-review/customize.toml
+# Scalar values override defaults; arrays append to defaults.
+
+[workflow]
+
+activation_steps_prepend = [
+  "Silently invoke `decathlon-find-skills` in Quick Context Scan Mode: scan codebase artifacts for technology signals and match against skills.catalog.json. If new relevant skills are found that aren't already installed (e.g. accessibility, FedID, or testing skills matching the code under review), surface a single one-line notice (e.g. '💡 N relevant skills available for this stack — run skill discovery to review.'). Never install anything in this step and never block on it.",
+  "Invoke `decathlon-tech-radar` to load the current technology classification rules (ADOPT / TRIAL / ASSESS / HOLD). Any use of HOLD (Forbidden or Legacy) technologies in the code under review must be flagged as a blocking finding. TRIAL technologies must be explicitly noted with a risk annotation.",
+]
+
+activation_steps_append = [
+  "Invoke `decathlon-tech-compliance` to load the SIG Maturity Matrix requirements for the domains covered by this review. Use the compliance standards as a review lens across architecture, development, security, and testing dimensions.",
+  "If the code under review integrates with a named Decathlon product, service, or API, invoke `knowledge-graph-query` to verify the integration matches the asset's actual tech stack, documented endpoints, and team ownership — flag any mismatch or unverified assumption as a review finding.",
+  "Check for `_specs/threat-model.md`, `_specs/security-requirements.md`, and `_specs/security-verification-checklist.md`. If missing: warn and allow pure refactors, docs-only, dependency-only, or routine operational/non-design changes with no new data flow, identity, access, external integration, or trust-boundary change; for all other changes, this is a blocking gap — stop and require the user to run `cybersecurity-threat-modeling` to create them before proceeding. When artifacts are present, cross-reference every in-scope checklist item and accepted-risk record against the code; unaddressed items are blocking findings."
+]
+
+persistent_facts = [
+  "Code reviews at Decathlon must explicitly verify: (1) Tech Radar compliance — no HOLD technologies; (2) FedID authentication patterns for any auth code; (3) Vitamin Play design system usage for any web UI code; (4) WCAG 2.2 AA accessibility for user-facing components — invoke `web-accessibility-evaluation` for UI scope; (5) Fetch API patterns for HTTP calls — XMLHttpRequest is deprecated.",
+  "When reviewing changes to customer-facing UI copy or microcopy, invoke `content-design` and check clarity, scanability, accessibility, UK English, terminology consistency, component constraints, and actionable recovery guidance. Do not apply this skill to marketing, slogans, legal/compliance copy, or translation/localisation; flag specialist review needs for critical checkout/payment, sensitive, inclusion, or legal content.",
+  "Security findings related to authentication or token handling must reference FedID compliance. Custom identity solutions are not acceptable — route through the appropriate FedID skill.",
+  "Test coverage is a mandatory review dimension per SIG Maturity (testing domain). Java/Spring stories should have Cucumber BDD tests generated via `add-cucumber-tests`.",
+  "When code calls or hardcodes an internal HTTP endpoint that isn't backed by a named, documented Decathlon API, invoke `decathlon-api-discovery` to check whether an existing, approved API/endpoint should have been used instead — flag any hand-rolled or duplicated integration as a review finding.",
+  "Code review must verify both mitigation evidence and accepted-risk records. For every in-scope `accepted` risk, confirm `_specs/threat-model.md` contains a complete acceptance record with the risk ID, severity, rationale, accepting application owner, decision date, review date, linked requirement and verification IDs, and any compensating controls or evidence. Missing, stale, or mismatched records are blocking findings.",
+  "Use stable IDs or explicit cross-references to detect orphan security artifacts: every reviewed checklist item should map to at least one requirement ID and risk ID, and every claimed mitigation in code or tests should be traceable back to the threat model.",
+]
+
+external_sources = [
+  "When the diff creates, changes, or reviews customer-facing UI copy or microcopy, validation/error messages, empty states, content hierarchy, or user-flow wording, invoke `content-design` and use its review guidance. It does not cover marketing, slogans, legal/compliance copy, or translation/localisation. If the skill is not installed, tell the user to run: `npx skills add dktunited/agent-skills --skill content-design`",
+  "When the user mentions an external tool or platform — or asks about available MCPs — invoke `decathlon-find-mcp-server`. If the skill is not installed, tell the user to run: `npx skills add dktunited/ai-augmented-sdlc --skill decathlon-find-mcp-server`",
+  "When the user asks about AI Augmented Development at Decathlon — GitHub Copilot usage, billing or quota, the AI Augmented SDLC platform, coding standards, agent skills, MCP servers, trainings, talks or monthly community calls — consult the official documentation via `decathlon-ai-augmented-development-docs`, which reads the versioned `llms-full.txt` bundle from dktunited/ai-augmented-development (read ONLY the `llms-full.txt` files — never the link-only `llms.txt`/`llms-pages.txt` indexes, which point back to the login-gated site). If the skill is not installed, tell the user to run: `npx skills add dktunited/ai-augmented-sdlc --skill decathlon-ai-augmented-development-docs`",
+]

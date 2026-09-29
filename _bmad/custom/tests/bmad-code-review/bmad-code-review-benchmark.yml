@@ -1,0 +1,96 @@
+# Benchmark: bmad-code-review workflow
+project: bmad-code-review
+model: copilot/claude-haiku-4.5
+
+# ── Pre-activate hook ─────────────────────────────────────────
+pre_activate:
+  command: >-
+    uv run ${PROJECT_ROOT:-.}/_bmad/scripts/resolve_customization.py
+    --skill ${CODE_REVIEW_WORKFLOW_SKILL_DIR:-./.agents/skills/bmad-code-review}
+    --key workflow
+  var: resolved_agent
+
+system_prompt: >-
+  {resolved_agent}
+
+  You are an AI agent helping with code review and quality assurance.
+  You have access to specialized skills for review validation.
+
+skills:
+  - name: bmad-code-review-workflow
+    path: ${CODE_REVIEW_WORKFLOW_SKILL_DIR:-./.agents/skills/bmad-code-review}/SKILL.md
+
+sub_skills:
+  - name: knowledge-graph-query
+    path: ./tests/bmad-code-review/stubs/knowledge-graph-query.skill.yml
+  - name: web-ui-development
+    path: ./tests/bmad-code-review/stubs/web-ui-development.skill.yml
+  - name: web-accessibility-evaluation
+    path: ./tests/bmad-code-review/stubs/web-accessibility-evaluation.skill.yml
+  - name: decathlon-tech-radar
+    path: ./tests/bmad-code-review/stubs/decathlon-tech-radar.skill.yml
+
+prompts:
+  - id: activation-asset-kg-verification
+    text: >-
+      Load the code-review workflow. When code involves Decathlon assets,
+      what verification must occur?
+    asserts:
+      - type: response_contains
+        value: "knowledge-graph-query"
+
+  - id: persistent-tech-radar-violations
+    text: >-
+      Load the code-review workflow. How should Tech Radar violations
+      be treated during code review?
+    asserts:
+      - type: response_contains
+        value: "hard"
+
+  - id: persistent-accessibility
+    text: >-
+      Load the code-review workflow. What is the accessibility requirement
+      status before code approval?
+    asserts:
+      - type: response_contains_ignore_case
+        value: "mandatory"
+
+  - id: review-web-code
+    text: >-
+      Load the code-review workflow. For web code review, what design system
+      standards must be verified?
+    asserts:
+      - type: response_contains
+        value: "Vitamin Play"
+
+  - id: review-loads-security-artifacts
+    text: >-
+      Load the code-review workflow. Which threat-modeling artifacts are
+      required inputs for the review, and what is each one used for?
+    asserts:
+      - type: response_contains
+        value: "security-requirements.md"
+      - type: response_contains
+        value: "security-verification-checklist.md"
+
+  # ── Threat model gate ─────────────────────────────────────────
+  - id: security-checklist-required-input
+    text: >-
+      Load the code-review workflow. What happens if
+      _specs/security-verification-checklist.md is missing when a code
+      review starts?
+    asserts:
+      - type: response_contains
+        value: "cybersecurity-threat-modeling"
+      - type: response_contains_ignore_case
+        value: "blocking"
+
+  - id: unaddressed-checklist-item-is-blocking
+    text: >-
+      Load the code-review workflow. What is the review outcome when an
+      in-scope security checklist item is not addressed in the code?
+    asserts:
+      - type: response_contains_ignore_case
+        value: "blocking"
+      - type: response_contains_ignore_case
+        value: "in-scope"

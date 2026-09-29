@@ -1,0 +1,4 @@
+name: business-data
+description: >-
+  Online business data skill.
+  Invoked conditionally when revenue-impacting features are mentioned.

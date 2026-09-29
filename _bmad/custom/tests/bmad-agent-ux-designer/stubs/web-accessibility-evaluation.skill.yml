@@ -1,0 +1,16 @@
+name: web-accessibility-evaluation
+description: "Evaluate a web UI for WCAG 2.2 AA and RGAA accessibility compliance."
+instructions: |
+  Perform an accessibility evaluation of the described UI or component.
+  Check for compliance with:
+  - WCAG 2.2 AA success criteria
+  - RGAA (Référentiel Général d'Amélioration de l'Accessibilité) requirements
+
+  Key areas to evaluate:
+  - Colour contrast ratios (minimum 4.5:1 for normal text, 3:1 for large text)
+  - Keyboard navigation and focus indicators
+  - Screen reader compatibility (ARIA roles, labels, live regions)
+  - Touch target sizes (minimum 44×44 px)
+  - Semantic HTML structure
+
+  Provide actionable findings with WCAG criterion references.

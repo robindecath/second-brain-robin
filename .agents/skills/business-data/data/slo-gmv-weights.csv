@@ -1,0 +1,37 @@
+# SLO → Online GMV Impact Weights
+#
+# This file maps individual SLO keys (as declared in the AppReferential Knowledge Graph
+# and referenced in DeliveryMetrics User Journey slo_keys) to an estimated share of
+# Decathlon's online GMV that would be AT RISK if that SLO were in full failure.
+#
+# gmv_share_pct: percentage of total online GMV that flows through user journeys
+#   depending on this SLO. A value of 72.0 means ~72% of online GMV is at risk
+#   if this SLO is fully degraded.
+#
+# HOW TO USE:
+#   1. Get the failing product's SLO keys from the Knowledge Graph.
+#   2. Look up each SLO key in this file.
+#   3. Take the MAXIMUM gmv_share_pct across all matching SLO keys for the product
+#      (avoids double-counting UJs that appear in multiple SLOs of the same product).
+#   4. Multiply by the monthly GMV for the failure month (from monthly-gmv.csv).
+#   5. Multiply by (failure_duration_minutes / 43200) to get the proportional loss.
+#
+# NOTE: Data is illustrative for demo purposes. Values are derived from UJ descriptions
+# and e-commerce industry benchmarks. Update with real analytics data when available.
+#
+# SCOPE: France + top European markets (total online as per monthly-gmv.csv)
+#
+slo_key,product_name,gmv_share_pct,impact_category,rationale
+slo-oneff-availability-api,OneFF,72.0,CRITICAL,"OneFF availability API powers product availability checks on product pages and checkout. ~72% of online sessions query availability before or during purchase — if unavailable, customers cannot see stock and abandon checkout."
+slo-oneff-kafka-consumer-lag,OneFF,38.0,HIGH,"Kafka consumer processes real-time inventory and fulfillment events. High consumer lag blocks order processing and stock updates. Estimated 38% of orders are affected when lag exceeds threshold, particularly click-and-collect and same-day delivery orders."
+slo-onecheckout-api-availability,OneCheckout,91.0,CRITICAL,"OneCheckout API handles the complete online checkout flow. Any degradation blocks the final step of the purchase funnel for all online channels."
+slo-onecheckout-payment-latency,OneCheckout,91.0,CRITICAL,"High payment latency leads to user abandonment at the payment step, affecting nearly all online transactions."
+slo-onepay-v2-availability,onepay-v2,88.0,CRITICAL,"Payment session initialisation — without it no online purchase can be completed. 88% of online transactions require a successful payment session."
+slo-onepay-v2-latency,onepay-v2,62.0,HIGH,"P95 payment API latency above threshold increases cart abandonment. Estimated 62% of online GMV is sensitive to payment latency (mobile-first customers are most affected)."
+slo-login-api-availability,Login,55.0,HIGH,"Customer login is required for checkout in most flows. Login failure prevents purchase completion for authenticated users (~55% of online buyers use an account at checkout)."
+slo-oneom-order-creation-availability,OneOM,80.0,CRITICAL,"Order creation API — if orders cannot be created, purchases cannot be confirmed. Affects 80% of online GMV where order confirmation is required for dispatch."
+slo-oneom-order-status-availability,OneOM,15.0,MEDIUM,"Order status API powers order tracking pages. Failure does not block new purchases but degrades post-purchase experience."
+slo-posdata-transaction-ingestion,Posdata,45.0,HIGH,"Transaction ingestion from e-commerce channels. If blocked, sales data is not collected, but real-time purchase blocking depends on implementation."
+slo-member-profile-api-availability,Login,22.0,MEDIUM,"Member profile API used for personalisation and loyalty. Failure degrades personalised experience but does not fully block purchase."
+slo-oneinvoice-generation-availability,OneInvoice,8.0,LOW,"Invoice generation — failure prevents invoice delivery but does not block the purchase itself."
+slo-onereturn-api-availability,OneReturn,5.0,LOW,"Return initiation API — failure prevents customers from initiating returns online. No direct new-purchase GMV impact."

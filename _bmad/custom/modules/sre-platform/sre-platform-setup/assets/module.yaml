@@ -1,0 +1,61 @@
+code: sre-platform
+name: "SRE Platform Reliability"
+version: "2.0.0"
+description: >
+  AI SRE system for Decathlon: incident investigation, SLI/SLO analysis,
+  blast-radius assessment, platform health checks, and deploy correlation.
+  Includes a BMAD agent (Morgan) and five Copilot CLI sub-agents.
+  External skills are fetched from their dedicated repositories via skills.config.json.
+
+# Agent roster
+agents:
+  - code: bmad-agent-sre
+    name: Morgan
+    title: Senior SRE / Platform Reliability Engineer
+    icon: "🔬"
+    team: decathlon-platform
+    description: >
+      BMAD orchestrator agent. Routes incidents, health checks, SLO queries,
+      blast-radius, and deploy investigations to the appropriate sub-skill or
+      delegates to a Copilot CLI sub-agent when available.
+
+# Copilot CLI sub-agents (deployed to .github/agents/ by sre-platform-setup)
+copilot_agents:
+  - code: agent-sre
+    file: agents/agent-sre.agent.md
+    role: Orchestrator — routes requests to specialized sub-agents
+  - code: agent-incident
+    file: agents/agent-incident.agent.md
+    role: Incident triage, health checks, SLO analysis, alert parsing
+  - code: agent-audit
+    file: agents/agent-audit.agent.md
+    role: Security/compliance audit, Datadog Audit Trail investigation
+  - code: agent-github-investigator
+    file: agents/agent-github-investigator.agent.md
+    role: Deploy correlation, PR/CI analysis, SLI YAML discovery
+  - code: agent-knowledge-graph
+    file: agents/agent-knowledge-graph.agent.md
+    role: AppReferential ownership, blast radius, team structure
+
+# External skill dependencies (installed via skills.config.json)
+external_skills:
+  - name: incident-investigation
+    repo: dktunited/ai-augmented-sdlc
+  - name: datadog-slo-lookup
+    repo: dktunited/ai-augmented-sdlc
+  - name: slo-generator
+    repo: dktunited/ai-augmented-sdlc
+  - name: knowledge-graph-query
+    repo: dktunited/app-referential
+  - name: dd-monitors
+    repo: datadog-labs/agent-skills
+  - name: dd-logs
+    repo: datadog-labs/agent-skills
+  - name: dd-apm
+    repo: datadog-labs/agent-skills
+  - name: dd-docs
+    repo: datadog-labs/agent-skills
+  - name: dd-llmo
+    repo: datadog-labs/agent-skills
+  - name: dd-audit
+    repo: datadog-labs/agent-skills

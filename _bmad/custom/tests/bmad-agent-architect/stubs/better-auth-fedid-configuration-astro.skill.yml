@@ -1,0 +1,12 @@
+name: better-auth-fedid-configuration-astro
+description: "Configure authentication in an Astro project using Decathlon FedID as the identity provider via better-auth."
+instructions: |
+  Set up Decathlon FedID authentication in an Astro project using better-auth.
+  Steps:
+  1. Install better-auth and the Decathlon FedID provider
+  2. Configure the FedID OAuth2 client with the correct scopes and redirect URIs
+  3. Add the auth API endpoint in src/pages/api/auth/
+  4. Set up session management with Astro middleware
+  5. Protect routes and expose user identity to pages and components
+
+  Provide complete, copy-paste-ready code for each step.

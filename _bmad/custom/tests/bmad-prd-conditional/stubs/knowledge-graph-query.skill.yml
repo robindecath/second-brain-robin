@@ -1,0 +1,4 @@
+name: knowledge-graph-query
+description: >-
+  Asset Knowledge Graph skill.
+  Invoked conditionally when product names are mentioned.

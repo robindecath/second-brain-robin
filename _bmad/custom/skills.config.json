@@ -1,0 +1,56 @@
+{
+  "_migrations": {
+    "remove": [
+      "delivery-metrics-user-journeys",
+      "asset-knowledge-graph-direct",
+      "online-business-data"
+    ]
+  },
+  "_notes": {
+    "decathlon-api-tool": "Low-level, generic OAuth2/PKCE HTTP client for calling any Decathlon API directly once you already know the endpoint (see tools.config.json). It does not help you find which API/endpoint to use.",
+    "decathlon-api-discovery": "Semantic search over the DocAPI index — use this to discover which Decathlon internal API or endpoint covers a business need before calling decathlon-api-tool. Wired as an always-on natural-language trigger (see docs/CUSTOMIZATION_STRATEGY.md) alongside knowledge-graph-query.",
+    "decathlon-pixl-search": "Search Decathlon PixL DAM for media assets (photos, images, videos) using natural language. Requires decathlon-api-tool for authentication. Routes queries to V_CAM_DAMCOMM (lifestyle) or V_PIXLDAMPRODUCT (product shots/youth content).",
+    "cybersecurity-threat-modeling": "Methodology-agnostic STRIDE threat-modeling skill. Wired into the BMAD architecture phase (bmad-architecture.toml) and the Architect agent (bmad-agent-architect.toml): the BMAD-specific step mapping and `_specs/` artifact paths live in those customizations, not in the skill itself.",
+    "ux-research": "Canonical Decathlon UX research methodology (discovery framing, method selection, screeners, protocols, moderation, transcript processing, synthesis, triangulation, challenger audit, confidence grading, personas/journeys/JTBD/HMW/OST, shareouts). It is MANDATORY and exclusive: wherever a BMAD phase touches user research, discovery evidence, personas, journeys, jobs-to-be-done, HMW or opportunity mapping, the agent must invoke `ux-research` and follow its templates and rules rather than improvising another research framework. Wired into the UX, PRD, brainstorming and epics/stories workflows and into the UX Designer, Analyst and PM agents.",
+    "content-design": "Canonical Decathlon skill for customer-facing UX content: UI copy and microcopy, component messages, content hierarchy, screen information architecture, user flows, and copy variants. Apply UK English, accessible user-focused language, consistent terminology, and actionable recovery guidance. Excludes marketing, slogans, legal/compliance copy, and translation/localisation. Wired into the UX, PRD, brainstorming, epics/stories, build, and code-review workflows and the UX Designer, Analyst, PM, and Dev agents.",
+    "decathlon-find-mcp-server": "MCP catalog discovery skill. Fetches mcp.catalog.json from dktunited/ai-augmented-sdlc, matches context against each entry's description/example, and guides installation — via the ai-sdlc canvas on Copilot App, or manual serverConfig elsewhere. Wired as an always-on trigger in all agent principles and workflow external_sources.",
+    "decathlon-ai-augmented-development-docs": "Reads the official AI Augmented Development docs portal (ai-augmented-development.decathlon.net), which is login-gated, by fetching the versioned full-content `llms-full.txt` bundle from dktunited/ai-augmented-development/public/llms via the gh CLI. Covers GitHub Copilot usage/billing/quota, the AI Augmented SDLC platform, coding standards, agent skills, MCP servers, trainings, talks and monthly community calls. Agents must read ONLY the `llms-full.txt` files, never the link-only `llms.txt`/`llms-pages.txt` indexes. Wired as an always-on trigger in all agent principles and workflow external_sources, and surfaced by bmad-help (bmad-help.toml).",
+    "product-scalability-assessment": "Evidence-based scalability-readiness / tech-debt assessment for an existing (brownfield) Decathlon product before it is promoted or scaled to more regions/countries. The skill itself lives in dktunited/ai-augmented-sdlc (installed from there); this repo only wires it into the Architect agent (bmad-agent-architect.toml) and the architecture workflow (bmad-architecture.toml). It chains knowledge-graph-query, decathlon-tech-radar, endoflife.date, delivery-metrics, decathlon-api-discovery, decathlon-tech-compliance and a Gini/bus-factor pass into a single Now/Next/Later report.",
+    "databricks-cli": "Databricks CLI skill (auth preflight + SQL via Statement Execution API) using OAuth instead of a manually managed PAT; pairs with the Databricks CLI now installed by default via the platform installers. Requires dktunited/ai-augmented-sdlc#462 (adds the skill itself) to be merged before this entry can actually install."
+  },
+  "dktunited/agent-skills": [
+    "decathlon-tech-radar",
+    "web-ui-development",
+    "decathlon-tech-compliance",
+    "web-accessibility-evaluation",
+    "incident-investigation",
+    "slo-generator",
+    "decathlon-api-tool",
+    "decathlon-api-discovery",
+    "cybersecurity-threat-modeling",
+    "ux-research",
+    "content-design"
+  ],
+  "dktunited/asset-knowledge-graph": [
+    "knowledge-graph-query"
+  ],
+  "dktunited/ai-augmented-sdlc": [
+    "blast-radius-analyzer",
+    "time-portfolio-analysis",
+    "knowledge-graph-visualizer",
+    "decathlon-find-skills",
+    "decathlon-find-mcp-server",
+    "decathlon-ai-augmented-development-docs",
+    "delivery-metrics",
+    "google-workspace",
+    "business-impact-estimator",
+    "help-sre",
+    "decathlon-pixl-search",
+    "business-data",
+    "databricks-cli",
+    "deploy-to-protos",
+    "deploy-to-pages",
+    "protos-data-and-api-access",
+    "product-scalability-assessment"
+  ]
+}

@@ -1,0 +1,20 @@
+name: cybersecurity-threat-modeling
+description: "Build and maintain a STRIDE threat model from architecture through testing. Produce prioritized risks, actionable security requirements, and design-phase security evidence."
+instructions: |
+  Run threat modeling for the current system or design change.
+
+  Use when designing a new system or major capability, or when data flow,
+  identity, access, or external integrations change.
+
+  Method:
+  1. Define scope, assets, assumptions, and reviewers.
+  2. Model trust boundaries and data flows.
+  3. Identify threats with STRIDE per trust boundary.
+  4. Score each risk as Risk = Likelihood x Impact, then assign a priority band:
+     P0 (16-25), P1 (9-15), P2 (4-8), P3 (1-3).
+  5. Define mitigations; every risk needs an owner, due date, and verification method.
+  6. Convert every mitigation into delivery work (ADR, story/task, or test).
+
+  Produce: threat-model.md, security-requirements.md, and
+  security-verification-checklist.md. Surface unresolved P0 risks for explicit
+  acceptance or remediation before sign-off.

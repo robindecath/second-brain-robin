@@ -24,6 +24,14 @@ suppression : mets à jour les Registry Rapide concernés, retire les chemins ob
 wikilinks. Après toute écriture, résume les changements ; pour une réponse fondée sur le vault, cite
 la note source. Tout ceci est natif : l'utilisateur n'a pas à le demander dans son prompt.
 
+Pour le suivi récurrent des externes de l'équipe, commence par le hub
+`2_Casquettes/suivi-des-externes-equipe/suivi-des-externes-equipe.md`.
+
+Pour les demandes de contact via Google Workspace, commence par le hub
+`3_Ressources/annuaire-contacts/annuaire-contacts.md`. Utilise la skill Google Workspace ; n'ouvre
+pas Chrome pour retrouver une conversation. Si son identifiant n'est pas accessible par ce flux,
+demande-le à l'utilisateur.
+
 ## 3. Sobriété
 
 Arrête-toi dès que la réponse est déterminable au niveau courant. N'ouvre une source secondaire

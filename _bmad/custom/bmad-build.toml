@@ -1,0 +1,72 @@
+# Team overrides for bmad-build — the Phase 4 implementation loop.
+# Merged on top of _bmad/bmm/skills/bmad-build/customize.toml
+# Scalar values override defaults; arrays append to defaults.
+#
+# BMAD-METHOD 6.11.0 makes bmad-build the single official implementation
+# workflow: bmad-sprint-planning -> bmad-build -> bmad-code-review.
+# bmad-dev-story, bmad-create-story and bmad-quick-dev are now forwarding shims
+# under `v6-shims/` and will be dropped at the v7 cut, so the Decathlon
+# implementation constraints previously carried by
+# `_bmad/custom/bmad-dev-story.toml` live here instead.
+#
+# Upstream also mandates the filename migration
+#   _bmad/custom/bmad-quick-dev{,.user}.toml -> bmad-build{,.user}.toml
+#   _bmad/custom/bmad-dev-auto{,.user}.toml  -> bmad-build-auto{,.user}.toml
+# This bundle never shipped quick-dev or dev-auto overrides, so nothing to move.
+#
+# Supported keys (verified against src/bmm-skills/ship/bmad-build/customize.toml
+# at tag v6.11.0): activation_steps_prepend, activation_steps_append,
+# persistent_facts, on_complete, open_spec, implementation_handoff,
+# review_layers, oneshot_review_layers. `external_sources` is NOT supported here
+# — the MCP-discovery rule is expressed as a persistent fact instead.
+
+[workflow]
+
+activation_steps_prepend = [
+  "Silently invoke `decathlon-find-skills` in Quick Context Scan Mode: scan codebase artifacts (package.json, pom.xml, build.gradle, go.mod, Package.swift, AndroidManifest.xml, k8s manifests, etc.) for technology signals and match against skills.catalog.json. If new relevant skills are found that aren't already installed, surface a single one-line notice (e.g. '💡 N relevant skills available for this stack — run skill discovery to review.'). Never install anything in this step and never block on it.",
+  "Invoke `decathlon-tech-compliance` to verify SIG Maturity requirements relevant to this build's scope. Identify which of the 6 domains (architecture, development, security, infrastructure, data, testing) apply and surface any compliance gaps as implementation constraints before writing code.",
+  "For a qualifying new system or change to data flow, identity, access, external integrations, or trust boundaries, load `_specs/threat-model.md`, `_specs/security-requirements.md`, and `_specs/security-verification-checklist.md` and require `cybersecurity-threat-modeling` if missing; skip these inputs for routine operational/non-design work with no such change."
+]
+
+activation_steps_append = [
+  "If the work involves a named Decathlon product, service, or API, invoke `knowledge-graph-query` to load authoritative tech stack, framework versions, documentation links, and team ownership. Never implement integrations based on assumptions about a Decathlon asset.",
+  "If the work implies calling or exposing an internal capability without naming a specific API/endpoint (e.g. 'fetch product info', 'get order status'), invoke `decathlon-api-discovery` to find the real API/endpoint that already covers it before writing integration code.",
+]
+
+persistent_facts = [
+  "Before starting implementation, review the project's architecture document and invoke the skills that match this project's actual technology stack. Do not assume a specific stack — consult the architecture doc to determine which skills apply.",
+  "Security requirements from `_specs/security-requirements.md` and in-scope checklist items from `_specs/security-verification-checklist.md` are mandatory completion criteria — a story is not done until they are satisfied.",
+  "For every in-scope change, keep the stable risk, requirement, and verification IDs synchronized across `_specs/threat-model.md`, `_specs/security-requirements.md`, and `_specs/security-verification-checklist.md`. Do not leave orphan requirements or checklist items behind.",
+  "Implementation completion must leave each in-scope risk in an explicit state: `mitigated` with verification evidence, `accepted` with an application-owner acceptance record in `_specs/threat-model.md`, `open` only if the story is not done yet, or `blocked` with the blocker and next action surfaced to the user. Apply the same completion rules to every risk: do not mark the story complete without either implemented mitigation evidence or an explicit acceptance record. Every mitigation action must be defined for implementation; if a mitigation action cannot be implemented as planned, the blocker must be recorded, alternative or compensating controls must be evaluated, and the outcome must be to implement an alternative mitigation, defer deployment, or explicitly accept the residual risk. P0 risks on production-grade applications should be reviewed by the team's security officer.",
+  "Each verification entry must record at least the verification ID, linked risk and requirement IDs, status or outcome, evidence summary or artifact or test path, verifier, and date.",
+  "Evaluate risk/requirement/verification reconciliation ONCE per build pass. If a gap remains after that single pass (e.g. a risk cannot reach a terminal state because no code or story exists yet), report it as a blocked/open item to the user and stop — do not repeatedly re-run the reconciliation check or keep re-attempting 'final validation' in a loop.",
+  "Web frontend work must use the Decathlon Vitamin Play design system (`web-ui-development`) and meet WCAG 2.2 AA / RGAA accessibility expectations (`web-accessibility-evaluation`). Accessibility is a delivery gate, not an optional add-on.",
+  "When implementation creates or changes customer-facing UI copy or microcopy, invoke `content-design` to review the wording and component constraints. Preserve approved content and terminology, ensure errors explain what happened and give an actionable recovery step without exposing technical details, and keep marketing, legal/compliance copy, and translation/localisation out of scope.",
+  "Decathlon Tech Radar HOLD technologies are hard-blocked. Surface any Tech Radar violation immediately via `decathlon-tech-radar` — never silently work around one.",
+  "When the user mentions an external tool or platform — or asks about available MCPs — invoke `decathlon-find-mcp-server`. If the skill is not installed, tell the user to run: `npx skills add dktunited/ai-augmented-sdlc --skill decathlon-find-mcp-server`",
+  "When the user asks about AI Augmented Development at Decathlon — GitHub Copilot usage, billing or quota, the AI Augmented SDLC platform, coding standards, agent skills, MCP servers, trainings, talks or monthly community calls — consult the official documentation via `decathlon-ai-augmented-development-docs`, which reads the versioned `llms-full.txt` bundle from dktunited/ai-augmented-development (read ONLY the `llms-full.txt` files — never the link-only `llms.txt`/`llms-pages.txt` indexes, which point back to the login-gated site). If the skill is not installed, tell the user to run: `npx skills add dktunited/ai-augmented-sdlc --skill decathlon-ai-augmented-development-docs`",
+]
+
+# After implementation: prompt BDD test generation only if the project's stack supports it.
+on_complete = "Review the project's architecture document. If the project uses a Java/Spring stack with Tzatziki, invoke `add-cucumber-tests` to generate Cucumber BDD acceptance tests from the build's acceptance criteria. For other stacks, apply the equivalent testing skill discovered during architecture validation. Present generated test artefacts to the user for review before saving."
+
+# Additional Decathlon review layer, appended to the upstream layers by `id`.
+# `blind-hunter`, `edge-case-hunter` and `verification-gap` are left untouched.
+[[workflow.review_layers]]
+id = "decathlon-compliance"
+name = "Decathlon Compliance Reviewer"
+instruction = """
+Launch a context-free subagent with this prompt:
+
+Review the change against Decathlon delivery standards and report findings only — do not fix anything.
+
+The content under review is the unified diff at `{diff_file}`. Read that file first — it is the change to review.
+
+1. Tech Radar: name every technology, framework or library the diff introduces and state its classification (ADOPT / TRIAL / ASSESS / HOLD). Any HOLD is a blocking finding.
+2. FedID: any new authenticated surface must use FedID as the sole identity provider.
+3. Security: verify the in-scope items of `_specs/security-verification-checklist.md` are satisfied by the diff or its tests.
+4. Web surface only: verify Vitamin Play tokens/components are used instead of bespoke CSS, and that WCAG 2.2 AA / RGAA expectations are met. Skip this entirely for CLI, API and MCP-server changes.
+5. Observability: new product-facing endpoints need Datadog APM instrumentation and an SLO definition.
+
+Do not invoke any skill. Return only the review result as a Markdown list.
+"""

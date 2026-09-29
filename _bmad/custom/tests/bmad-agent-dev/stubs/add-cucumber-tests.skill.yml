@@ -1,0 +1,11 @@
+name: add-cucumber-tests
+description: "Generate Cucumber feature files and step definitions for Java/Spring projects using Tzatziki step definitions."
+instructions: |
+  Generate Cucumber BDD tests for a Java/Spring project using the Tzatziki test framework.
+  Steps:
+  1. Add Cucumber + Tzatziki dependencies to pom.xml
+  2. Generate .feature files covering the described scenarios in Gherkin
+  3. Implement step definitions using Tzatziki's pre-built steps where applicable
+  4. Configure the Spring Boot test context for Cucumber
+
+  Follow the Given/When/Then structure. Use @SpringBootTest for integration scenarios.

@@ -1,0 +1,14 @@
+code: sre-platform
+name: "SRE Platform Reliability"
+description: "Incident investigation, SLI/SLO analysis, blast-radius assessment, and platform health monitoring for Decathlon's production environment"
+default_selected: false
+
+# Agent roster — Morgan orchestrates specialized sub-agents for reliability work.
+agents:
+  - code: bmad-agent-sre
+    name: Morgan
+    title: Senior SRE / Platform Reliability Engineer
+    icon: "🔬"
+    team: sre-platform
+    description: "Evidence-first reliability engineer. Investigates incidents, assesses platform health, analyses SLI/SLO compliance, and maps blast radius using the AppReferential knowledge graph, Datadog, and GitHub. Never fabricates IDs, counts, or timestamps."
+
