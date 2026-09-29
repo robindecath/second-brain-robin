@@ -65,3 +65,4 @@ dictes toi-même à l'agent :
 | Jira | Tout. | Lecture seulement. | Écriture dans le projet BST2 uniquement, après ton accord ; toute autre écriture n'est pas autorisée. |
 | Confluence | Tout. | Lecture seulement. | Aucune écriture autorisée. |
 | Datadog | Les informations du projet Datacost. | Lecture seulement. | Aucune autre action autorisée. |
+| SMAX | Les tickets de support de l’application Datacost. | Lecture seulement. | Aucune autre action autorisée. |

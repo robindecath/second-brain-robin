@@ -19,6 +19,9 @@ Pour toute demande, identifie le dossier IPCRA concerné et lis son hub homonyme
 note homonyme (`X/X.md`), c'est elle qu'on lit, jamais le dossier. Utilise son **Registry Rapide**
 pour trouver le chemin exact, puis va directement à la cible.
 
+Pour le rôle de Tech lead Datacost, le hub est `2_Casquettes/2_Casquettes.md` et sa note de contexte est
+`2_Casquettes/tech-lead-datacost/tech-lead-datacost.md`.
+
 Après toute création, qualification, transformation, déplacement, renommage, archivage ou
 suppression : mets à jour les Registry Rapide concernés, retire les chemins obsolètes, répare les
 wikilinks. Après toute écriture, résume les changements ; pour une réponse fondée sur le vault, cite
