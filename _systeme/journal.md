@@ -36,3 +36,15 @@ Le type est ce qui rend le journal filtrable : la rétro mensuelle lit les `fric
 les répétitions, et la revue hebdo cherche la dernière `revue` pour savoir où s'arrêter.
 
 ## Entrées
+
+### 2026-09-29 — friction — Clarification des droits d’écriture Jira
+
+La portée des droits d’écriture Jira/Confluence a nécessité une question de clarification après
+une réponse initiale couvrant lecture et écriture. Le périmètre retenu est Jira BST2 avec accord
+explicite et Confluence en lecture seule.
+
+### 2026-09-29 — décision — Personnalisation de config.md
+
+Renseignement de `config.md` avec les préférences d'identité, de rôle, de casquettes, de langue,
+de ton, de nommage, de plafonds, de périmètre sensible et les droits déclarés pour les outils
+externes.

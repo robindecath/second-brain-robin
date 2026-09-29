@@ -10,22 +10,22 @@ created_date: 2026-09-19 20:53:34
 
 ## 1. Identité & usage
 
-- **Prénom** : `<Prénom>` — comment l'agent te désigne.
-- **Rôle** : `<ex. Développeuse, Consultant indépendant, Étudiant>`.
-- **Contexte** : `<pro | perso | mixte>` — influence le ton et les exemples que l'agent choisit.
+- **Prénom** : `Robin` — comment l'agent te désigne.
+- **Rôle** : `dev`.
+- **Contexte** : `professionnel` — influence le ton et les exemples que l'agent choisit.
 
 ## 2. Casquettes principales
 
 Rôles permanents (sans date de fin), 2 à 4 maximum. Chacun devient un dossier dans
 `2_Casquettes/`.
 
-- `<Casquette 1, ex. « Référent Sécurité »>`
-- `<Casquette 2, ex. « Bénévole association X »>`
+- `Tech lead Datacost`
+- `Suivi des externes de l'équipe`
 
 ## 3. Ton et langue
 
-- **Langue** : `<français | anglais | ...>`.
-- **Ton** : `<ex. direct et concis, pédagogique, informel>`.
+- **Langue** : `français`.
+- **Ton** : `concis, pédagogique et informel`.
 
 ## 4. Conventions
 
@@ -34,8 +34,8 @@ règles sont structurelles et ne se configurent pas : un dossier et sa note de c
 même nom (`Projet_X/Projet_X.md`), un hub porte le nom de son dossier, une capture d'Inbox est
 datée (`AAAA-MM-JJ-nom-court.md`).
 
-- **Casse des noms de fichiers** : `<ex. Snake_Case, kebab-case>`.
-- **Format de date** : `<ex. AAAA-MM-JJ>`.
+- **Casse des noms de fichiers** : `kebab-case`.
+- **Format de date** : `AAAA-MM-JJ`.
 
 ## 5. Plafonds
 
@@ -55,12 +55,13 @@ un plafond s'applique ; cette table dit *combien*. Modifiables, à condition de 
 Ce qui ne doit **jamais** être écrit dans le vault, quelle que soit la source — y compris si tu le
 dictes toi-même à l'agent :
 
-- `<ex. santé d'autrui>`
-- `<ex. rémunération, la sienne ou celle d'un tiers>`
-- `<ex. données confidentielles d'un employeur ou d'un client>`
+- Aucune catégorie spécifique déclarée.
 
 ## 7. Outils externes branchés
 
 | Outil | Ce qu'il peut lire | Action directe, sans demander | Accord obligatoire |
 |---|---|---|---|
-| `<autre outil>` | `<ce qu'il peut lire>` | `<ce qu'il peut faire seul>` | `<ce qui nécessite ton accord>` |
+| GitHub | Tout DKTUnited ; mes dépôts concernés sont liés à Datacost. | Lecture seulement. | Toute écriture nécessite ton accord. |
+| Jira | Tout. | Lecture seulement. | Écriture dans le projet BST2 uniquement, après ton accord ; toute autre écriture n'est pas autorisée. |
+| Confluence | Tout. | Lecture seulement. | Aucune écriture autorisée. |
+| Datadog | Les informations du projet Datacost. | Lecture seulement. | Aucune autre action autorisée. |
