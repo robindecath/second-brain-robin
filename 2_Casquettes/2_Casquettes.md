@@ -28,6 +28,7 @@ dans le même dossier (voir `3_Ressources/Pattern_Extensibilite/Pattern_Extensib
 | Élément | Description | Chemin |
 |---|---|---|
 | Suivi des externes de l'équipe | Suivi permanent des externes de l'équipe | 2_Casquettes/suivi-des-externes-equipe/suivi-des-externes-equipe.md |
+| Tech lead Datacost | Gestion technique de l’application Datacost | 2_Casquettes/tech-lead-datacost/tech-lead-datacost.md |
 
 ## Règle de sortie
 

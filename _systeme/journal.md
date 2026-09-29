@@ -102,3 +102,35 @@ signaler ce qui manque plutôt que supposer la période.
 Précision de la règle « Préparation des suivis mensuels d'équipe » : si aucun EI antérieur n'existe,
 ne pas chercher de fichier de dernier EI et lister uniquement les tickets Jira effectués au cours
 du mois précédent.
+
+### 2026-09-29 — friction — Clarification de SMAX
+
+La création de la casquette Tech lead Datacost a nécessité de demander ce que signifiait SMAX,
+terme absent du glossaire. Robin a précisé qu’il s’agit de l’outil où arrivent les tickets de
+support de l’application.
+
+### 2026-09-29 — décision — Création de la casquette Tech lead Datacost
+
+Création de la casquette permanente avec son périmètre de gestion technique de l’application :
+suivi de la dette technique, mise en place technique, vérification Datadog et suivi ponctuel des
+tickets de support SMAX. Le registry des casquettes, le routage, le glossaire et la configuration
+des outils externes sont mis à jour en conséquence.
+
+### 2026-09-29 — décision — Création de la casquette Suivi des externes
+
+Création de la casquette permanente « Suivi des externes de l’équipe », déclarée dans `config.md`.
+Le registry des casquettes et le routage sont mis à jour. Le périmètre opérationnel détaillé reste
+à préciser.
+
+### 2026-09-29 — friction — Casquette Suivi des externes déjà existante
+
+J’ai interprété à tort la casquette « Suivi des externes de l’équipe », déjà déclarée dans
+`config.md`, comme une casquette à créer. Robin a signalé qu’elle existait déjà ; j’ai retiré la
+fiche créée en doublon ainsi que ses entrées de registry et de routage. L’état local consulté ne
+contenait pas d’autre fiche correspondante.
+
+### 2026-09-29 — friction — Routage inégal des casquettes
+
+J’ai ajouté le renvoi vers Tech lead Datacost dans `.github/copilot-instructions.md` sans vérifier
+si le même critère de fréquence était appliqué aux autres casquettes. Robin a relevé cette
+incohérence ; le routage devrait suivre un critère explicite et être vérifié de façon cohérente.

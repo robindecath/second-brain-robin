@@ -67,3 +67,4 @@ dictes toi-même à l'agent :
 | Confluence | Tout. | Lecture seulement. | Aucune écriture autorisée. |
 | Datadog | Les informations du projet Datacost. | Lecture seulement. | Aucune autre action autorisée. |
 | Google Workspace (Gmail, Google Chat, Google Docs) | Emails Gmail, conversations Google Chat et documents Google, lorsque les connecteurs correspondants sont disponibles. | Lecture seulement. | Toute écriture nécessite ton accord explicite. |
+| SMAX | Les tickets de support de l’application Datacost. | Lecture seulement. | Aucune autre action autorisée. |
