@@ -27,6 +27,7 @@ dans le même dossier (voir `3_Ressources/Pattern_Extensibilite/Pattern_Extensib
 
 | Élément | Description | Chemin |
 |---|---|---|
+| Tech lead Datacost | Gestion technique de l’application Datacost | 2_Casquettes/tech-lead-datacost/tech-lead-datacost.md |
 
 ## Règle de sortie
 
